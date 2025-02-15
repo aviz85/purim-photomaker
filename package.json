@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@fal-ai/client": "^1.2.3",
+    "@fal-ai/serverless-client": "^0.15.0",
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
     "framer-motion": "^12.4.3",
