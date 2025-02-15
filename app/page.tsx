@@ -14,43 +14,49 @@ function classNames(...classes: string[]) {
 export default function Home() {
   const [selectedGender, setSelectedGender] = useState<'boy' | 'girl'>('boy');
   const [selectedCostume, setSelectedCostume] = useState<Costume | null>(null);
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
     
     // Reset any previous errors
     setError(null);
     setGeneratedImage(null);
     
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image size must be less than 5MB');
+    // Validate file size (max 5MB per file)
+    const oversizedFiles = files.filter(file => file.size > 5 * 1024 * 1024);
+    if (oversizedFiles.length > 0) {
+      setError(`Some images are too large (max 5MB per image): ${oversizedFiles.map(f => f.name).join(', ')}`);
       return;
     }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setError('Please upload a valid image file');
+    // Validate file types
+    const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+    if (invalidFiles.length > 0) {
+      setError(`Some files are not images: ${invalidFiles.map(f => f.name).join(', ')}`);
       return;
     }
     
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setUploadedImage(reader.result as string);
-    };
-    reader.onerror = () => {
-      setError('Failed to read the image file');
-    };
-    reader.readAsDataURL(file);
+    // Read all files as base64
+    Promise.all(
+      files.map(file => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      }))
+    ).then(
+      base64Images => setUploadedImages(base64Images),
+      error => setError('Failed to read image files')
+    );
   }, []);
 
   const handleGenerate = async () => {
-    if (!selectedCostume || !uploadedImage) return;
+    if (!selectedCostume || uploadedImages.length === 0) return;
 
     setIsLoading(true);
     setError(null);
@@ -62,7 +68,7 @@ export default function Home() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          images: [uploadedImage],
+          images: uploadedImages,
           prompt: selectedCostume.prompt,
           style: 'Photographic',
         }),
@@ -170,36 +176,41 @@ export default function Home() {
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
           <div className="flex flex-col items-center">
             <div className="mb-6 text-center">
-              <h3 className="text-lg font-medium text-purple-800 mb-2">הנחיות לתמונה:</h3>
+              <h3 className="text-lg font-medium text-purple-800 mb-2">הנחיות לתמונות:</h3>
               <ul className="text-sm text-purple-600 space-y-1 text-right">
-                <li>• התמונה צריכה להיות ברורה ולהראות את הפנים</li>
-                <li>• רצוי תמונה חזיתית (פרונטלית)</li>
+                <li>• התמונות צריכות להיות ברורות ולהראות את הפנים</li>
+                <li>• רצוי תמונות חזיתיות (פרונטליות)</li>
                 <li>• הפנים צריכות להיות מוארות היטב</li>
-                <li>• גודל מקסימלי: 5MB</li>
+                <li>• גודל מקסימלי: 5MB לכל תמונה</li>
+                <li>• ניתן להעלות מספר תמונות</li>
               </ul>
             </div>
             <label className="w-full max-w-md flex flex-col items-center px-4 py-6 bg-purple-50 text-purple rounded-lg shadow-lg tracking-wide border border-purple-200 cursor-pointer hover:bg-purple-100">
               <svg className="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.74-.12 1.1zM11 11h3l-4-4-4 4h3v3h2v-3z" />
               </svg>
-              <span className="mt-2 text-base leading-normal">העלו תמונה</span>
-              <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+              <span className="mt-2 text-base leading-normal">העלו תמונות</span>
+              <input type="file" className="hidden" accept="image/*" multiple onChange={handleImageUpload} />
             </label>
 
-            {uploadedImage && (
-              <div className="mt-4 relative w-32 h-32">
-                <Image
-                  src={uploadedImage}
-                  alt="Uploaded image"
-                  fill
-                  className="object-cover rounded-lg"
-                />
-                <button
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                  onClick={() => setUploadedImage(null)}
-                >
-                  ×
-                </button>
+            {uploadedImages.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {uploadedImages.map((image, index) => (
+                  <div key={index} className="relative w-32 h-32">
+                    <Image
+                      src={image}
+                      alt={`Uploaded image ${index + 1}`}
+                      fill
+                      className="object-cover rounded-lg"
+                    />
+                    <button
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                      onClick={() => setUploadedImages(images => images.filter((_, i) => i !== index))}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -215,12 +226,12 @@ export default function Home() {
             className={classNames(
               'px-8 py-3 rounded-lg text-lg font-medium',
               'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-purple-400',
-              isLoading || !selectedCostume || !uploadedImage
+              isLoading || !selectedCostume || uploadedImages.length === 0
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-purple-600 text-white hover:bg-purple-700'
             )}
             onClick={handleGenerate}
-            disabled={isLoading || !selectedCostume || !uploadedImage}
+            disabled={isLoading || !selectedCostume || uploadedImages.length === 0}
           >
             {isLoading ? 'יוצר תמונה...' : 'צור תמונה קסומה!'}
           </button>

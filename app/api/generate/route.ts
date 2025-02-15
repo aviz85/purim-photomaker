@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fal } from "@fal-ai/client";
+import JSZip from 'jszip';
 
 export const runtime = 'edge';
 
@@ -13,29 +14,45 @@ fal.config({
   credentials: FAL_KEY
 });
 
+async function createZipFromImages(images: string[]): Promise<Blob> {
+  const zip = new JSZip();
+  
+  // Add each image to the ZIP
+  for (let i = 0; i < images.length; i++) {
+    const base64Data = images[i].split(',')[1];
+    const binaryData = Buffer.from(base64Data, 'base64');
+    zip.file(`image_${i + 1}.jpg`, binaryData);
+  }
+  
+  // Generate ZIP file
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  return zipBlob;
+}
+
 export async function POST(request: Request) {
   try {
     const { images, prompt, style } = await request.json();
     
-    // Debug the incoming image data
-    console.log('Image data length:', images[0].length);
-    console.log('Image data prefix:', images[0].substring(0, 50));
+    // Debug the incoming data
+    console.log('Number of images:', images.length);
+    console.log('First image data length:', images[0].length);
+    console.log('First image data prefix:', images[0].substring(0, 50));
 
-    // Convert base64 to blob
-    const base64Data = images[0].split(',')[1];
-    const binaryData = Buffer.from(base64Data, 'base64');
-    const blob = new Blob([binaryData], { type: 'image/jpeg' });
+    // Create ZIP archive from images
+    console.log('Creating ZIP archive...');
+    const zipBlob = await createZipFromImages(images);
     
-    console.log('Uploading image to fal.ai storage...');
-    const imageUrl = await fal.storage.upload(blob);
-    console.log('Image uploaded:', imageUrl);
+    // Upload ZIP to fal.ai storage
+    console.log('Uploading ZIP to fal.ai storage...');
+    const zipUrl = await fal.storage.upload(zipBlob);
+    console.log('ZIP uploaded:', zipUrl);
 
     console.log('Attempting API call...');
 
     try {
       const result = await fal.subscribe("fal-ai/photomaker", {
         input: {
-          image_archive_url: imageUrl,
+          image_archive_url: zipUrl,
           prompt,
           style,
           base_pipeline: "photomaker-style",
