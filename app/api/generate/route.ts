@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { client } from "@fal-ai/client";
+import * as fal from "@fal-ai/client/dist/exports/core";
 
 export const runtime = 'edge';
 
@@ -10,7 +10,7 @@ if (!FAL_KEY) {
 
 // Initialize with credentials
 const [key_id, key_secret] = FAL_KEY.split(':');
-const falClient = client({
+const falClient = new fal.Client({
   credentials: {
     key_id,
     key_secret,
