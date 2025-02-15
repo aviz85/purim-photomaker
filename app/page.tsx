@@ -1,101 +1,210 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Tab } from '@headlessui/react';
+import { COSTUMES } from '../lib/constants';
+import { Costume, GeneratedImage } from '../lib/types';
+import Image from 'next/image';
+
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(' ');
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [selectedGender, setSelectedGender] = useState<'boy' | 'girl'>('boy');
+  const [selectedCostume, setSelectedCostume] = useState<Costume | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setUploadedImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const handleGenerate = async () => {
+    if (!selectedCostume || !uploadedImage) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          images: [uploadedImage],
+          prompt: selectedCostume.prompt,
+          style: 'Photographic',
+        }),
+      });
+
+      const data = await response.json();
+      if (data.images && data.images[0]) {
+        setGeneratedImage(data.images[0]);
+      }
+    } catch (error) {
+      console.error('Error generating image:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTabChange = (index: number) => {
+    setSelectedGender(index === 0 ? 'boy' : 'girl');
+    setSelectedCostume(null);
+  };
+
+  const filteredCostumes = COSTUMES.filter(costume => costume.gender === selectedGender);
+  console.log('Selected Gender:', selectedGender);
+  console.log('All Costumes:', COSTUMES);
+  console.log('Filtered Costumes:', filteredCostumes);
+
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-purple-100 to-pink-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-purple-800 mb-4">יוצר תמונות פורים קסום</h1>
+          <p className="text-lg text-purple-600">העלו תמונה של הילד/ה ובחרו תחפושת קסומה!</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
+          <Tab.Group selectedIndex={selectedGender === 'boy' ? 0 : 1} onChange={handleTabChange}>
+            <Tab.List className="flex space-x-4 rtl:space-x-reverse mb-6">
+              <Tab
+                className={({ selected }) =>
+                  classNames(
+                    'w-full py-2.5 text-lg font-medium leading-5 rounded-lg',
+                    'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-purple-400 ring-white ring-opacity-60',
+                    selected
+                      ? 'bg-purple-600 text-white shadow'
+                      : 'text-purple-600 hover:bg-purple-100'
+                  )
+                }
+              >
+                בנים
+              </Tab>
+              <Tab
+                className={({ selected }) =>
+                  classNames(
+                    'w-full py-2.5 text-lg font-medium leading-5 rounded-lg',
+                    'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-purple-400 ring-white ring-opacity-60',
+                    selected
+                      ? 'bg-pink-600 text-white shadow'
+                      : 'text-pink-600 hover:bg-pink-100'
+                  )
+                }
+              >
+                בנות
+              </Tab>
+            </Tab.List>
+
+            <Tab.Panels>
+              <Tab.Panel static className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredCostumes.map((costume) => (
+                  <motion.div
+                    key={costume.id}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={classNames(
+                      'cursor-pointer p-4 rounded-lg',
+                      selectedCostume?.id === costume.id
+                        ? 'bg-purple-100 border-2 border-purple-500'
+                        : 'bg-gray-50 hover:bg-purple-50'
+                    )}
+                    onClick={() => setSelectedCostume(costume)}
+                  >
+                    <h3 className="text-lg font-medium text-purple-800 mb-2">{costume.name}</h3>
+                    <p className="text-sm text-purple-600">{costume.description}</p>
+                  </motion.div>
+                ))}
+              </Tab.Panel>
+            </Tab.Panels>
+          </Tab.Group>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
+          <div className="flex flex-col items-center">
+            <label className="w-full max-w-md flex flex-col items-center px-4 py-6 bg-purple-50 text-purple rounded-lg shadow-lg tracking-wide border border-purple-200 cursor-pointer hover:bg-purple-100">
+              <svg className="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.74-.12 1.1zM11 11h3l-4-4-4 4h3v3h2v-3z" />
+              </svg>
+              <span className="mt-2 text-base leading-normal">העלו תמונה</span>
+              <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+            </label>
+
+            {uploadedImage && (
+              <div className="mt-4 relative w-32 h-32">
+                <Image
+                  src={uploadedImage}
+                  alt="Uploaded image"
+                  fill
+                  className="object-cover rounded-lg"
+                />
+                <button
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                  onClick={() => setUploadedImage(null)}
+                >
+                  ×
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="text-center">
+          <button
+            className={classNames(
+              'px-8 py-3 rounded-lg text-lg font-medium',
+              'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-purple-400',
+              isLoading || !selectedCostume || !uploadedImage
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-purple-600 text-white hover:bg-purple-700'
+            )}
+            onClick={handleGenerate}
+            disabled={isLoading || !selectedCostume || !uploadedImage}
+          >
+            {isLoading ? 'יוצר תמונה...' : 'צור תמונה קסומה!'}
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {generatedImage && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="mt-8 bg-white rounded-2xl shadow-xl p-6"
+            >
+              <h2 className="text-2xl font-bold text-purple-800 mb-4 text-center">התמונה המוכנה!</h2>
+              <div className="relative w-full aspect-square max-w-2xl mx-auto">
+                <Image
+                  src={generatedImage.url}
+                  alt="Generated costume image"
+                  fill
+                  className="object-contain rounded-lg"
+                />
+              </div>
+              <div className="mt-4 text-center">
+                <a
+                  href={generatedImage.url}
+                  download="purim-costume.png"
+                  className="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                >
+                  הורד תמונה
+                </a>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </main>
   );
-}
+} 
