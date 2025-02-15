@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import * as fal from "@fal-ai/serverless-client";
+import { fal } from "@fal-ai/client";
 
 export const runtime = 'edge';
 
@@ -9,12 +9,8 @@ if (!FAL_KEY) {
 }
 
 // Initialize with credentials
-const [key_id, key_secret] = FAL_KEY.split(':');
-const falClient = fal.init({
-  credentials: {
-    key_id,
-    key_secret,
-  },
+fal.config({
+  credentials: FAL_KEY
 });
 
 export async function POST(request: Request) {
@@ -24,15 +20,20 @@ export async function POST(request: Request) {
     // Debug the incoming image data
     console.log('Image data length:', images[0].length);
     console.log('Image data prefix:', images[0].substring(0, 50));
-    console.log('Using FAL_KEY:', FAL_KEY.split(':')[0] + '...');
 
-    // Create a temporary URL from base64 data
-    const imageUrl = images[0];
+    // Convert base64 to blob
+    const base64Data = images[0].split(',')[1];
+    const binaryData = Buffer.from(base64Data, 'base64');
+    const blob = new Blob([binaryData], { type: 'image/jpeg' });
+    
+    console.log('Uploading image to fal.ai storage...');
+    const imageUrl = await fal.storage.upload(blob);
+    console.log('Image uploaded:', imageUrl);
 
     console.log('Attempting API call...');
 
     try {
-      const result = await falClient.subscribe("fal-ai/photomaker", {
+      const result = await fal.subscribe("fal-ai/photomaker", {
         input: {
           image_archive_url: imageUrl,
           prompt,
@@ -52,48 +53,50 @@ export async function POST(request: Request) {
 
       console.log('API call successful');
       return NextResponse.json(result.data);
-    } catch (apiError: any) {
+    } catch (apiError: unknown) {
       console.error('API Error:', apiError);
-      if (apiError.response) {
+      if (apiError && typeof apiError === 'object' && 'response' in apiError) {
         try {
-          const errorData = await apiError.response.json();
+          const errorData = await (apiError.response as Response).json();
           console.error('API Error Details:', errorData);
           return NextResponse.json({ 
             error: 'API Error',
             details: errorData.message || 'Unknown API error'
-          }, { status: apiError.response.status });
+          }, { status: (apiError.response as Response).status });
         } catch (e) {
           console.error('Failed to parse API error:', e);
         }
       }
       throw apiError;
     }
-  } catch (error: any) {
-    console.error('Error details:', error?.message || error);
+  } catch (error: unknown) {
+    console.error('Error details:', error instanceof Error ? error.message : error);
     
     // Handle specific error types
-    if (error.message?.includes('Unauthorized')) {
-      return NextResponse.json({ 
-        error: 'Authentication failed',
-        details: 'API key authentication failed. Please check your credentials.'
-      }, { status: 401 });
-    }
-    if (error.message?.includes('Unprocessable Entity')) {
-      return NextResponse.json({ 
-        error: 'Failed to process image',
-        details: 'Please try a different image or make sure the image is clear and shows a face'
-      }, { status: 422 });
-    }
-    if (error.message?.includes('JSON')) {
-      return NextResponse.json({ 
-        error: 'Invalid request',
-        details: 'Failed to parse request data'
-      }, { status: 400 });
+    if (error instanceof Error) {
+      if (error.message.includes('Unauthorized')) {
+        return NextResponse.json({ 
+          error: 'Authentication failed',
+          details: 'API key authentication failed. Please check your credentials.'
+        }, { status: 401 });
+      }
+      if (error.message.includes('Unprocessable Entity')) {
+        return NextResponse.json({ 
+          error: 'Failed to process image',
+          details: 'Please try a different image or make sure the image is clear and shows a face'
+        }, { status: 422 });
+      }
+      if (error.message.includes('JSON')) {
+        return NextResponse.json({ 
+          error: 'Invalid request',
+          details: 'Failed to parse request data'
+        }, { status: 400 });
+      }
     }
 
     return NextResponse.json({ 
       error: 'Failed to generate image',
-      details: error?.message || 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 } 
