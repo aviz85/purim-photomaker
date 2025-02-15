@@ -17,14 +17,33 @@ export default function Home() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    // Reset any previous errors
+    setError(null);
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image size must be less than 5MB');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload a valid image file');
+      return;
+    }
+    
     const reader = new FileReader();
     reader.onloadend = () => {
       setUploadedImage(reader.result as string);
+    };
+    reader.onerror = () => {
+      setError('Failed to read the image file');
     };
     reader.readAsDataURL(file);
   }, []);
@@ -33,6 +52,8 @@ export default function Home() {
     if (!selectedCostume || !uploadedImage) return;
 
     setIsLoading(true);
+    setError(null);
+    
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -47,11 +68,19 @@ export default function Home() {
       });
 
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.details || data.error || 'Failed to generate image');
+      }
+
       if (data.images && data.images[0]) {
         setGeneratedImage(data.images[0]);
+      } else {
+        throw new Error('No image was generated');
       }
     } catch (error) {
       console.error('Error generating image:', error);
+      setError(error instanceof Error ? error.message : 'Failed to generate image');
     } finally {
       setIsLoading(false);
     }
@@ -160,6 +189,11 @@ export default function Home() {
         </div>
 
         <div className="text-center">
+          {error && (
+            <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+              {error}
+            </div>
+          )}
           <button
             className={classNames(
               'px-8 py-3 rounded-lg text-lg font-medium',
