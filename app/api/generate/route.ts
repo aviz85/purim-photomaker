@@ -15,17 +15,14 @@ export async function POST(request: Request) {
     console.log('Image data length:', images[0].length);
     console.log('Image data prefix:', images[0].substring(0, 50));
 
-    // Create a simple array of images
-    const imageUrls = [{
-      "url": images[0],
-      "name": "image001.jpg"
-    }];
+    // Create a temporary URL from base64 data
+    const imageUrl = images[0];
 
-    console.log('Attempting API call with direct image data...');
+    console.log('Attempting API call...');
 
     const result = await fal.subscribe("fal-ai/photomaker", {
       input: {
-        images: imageUrls,
+        image_archive_url: imageUrl,
         prompt,
         style,
         base_pipeline: "photomaker-style",
@@ -41,6 +38,12 @@ export async function POST(request: Request) {
     return NextResponse.json(result.data);
   } catch (error: any) {
     console.error('Error details:', error?.message || error);
+    if (error.message?.includes('Unprocessable Entity')) {
+      return NextResponse.json({ 
+        error: 'Failed to process image',
+        details: 'Please try a different image or make sure the image is clear and shows a face'
+      }, { status: 422 });
+    }
     return NextResponse.json({ 
       error: 'Failed to generate image',
       details: error?.message || 'Unknown error'

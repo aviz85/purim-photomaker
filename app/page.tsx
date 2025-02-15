@@ -25,6 +25,7 @@ export default function Home() {
     
     // Reset any previous errors
     setError(null);
+    setGeneratedImage(null);
     
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
@@ -161,6 +162,15 @@ export default function Home() {
 
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
           <div className="flex flex-col items-center">
+            <div className="mb-6 text-center">
+              <h3 className="text-lg font-medium text-purple-800 mb-2">הנחיות לתמונה:</h3>
+              <ul className="text-sm text-purple-600 space-y-1 text-right">
+                <li>• התמונה צריכה להיות ברורה ולהראות את הפנים</li>
+                <li>• רצוי תמונה חזיתית (פרונטלית)</li>
+                <li>• הפנים צריכות להיות מוארות היטב</li>
+                <li>• גודל מקסימלי: 5MB</li>
+              </ul>
+            </div>
             <label className="w-full max-w-md flex flex-col items-center px-4 py-6 bg-purple-50 text-purple rounded-lg shadow-lg tracking-wide border border-purple-200 cursor-pointer hover:bg-purple-100">
               <svg className="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.74-.12 1.1zM11 11h3l-4-4-4 4h3v3h2v-3z" />
