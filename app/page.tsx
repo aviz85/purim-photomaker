@@ -68,15 +68,22 @@ export default function Home() {
         }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (e) {
+        console.error('Failed to parse response:', e);
+        throw new Error('Invalid response from server');
+      }
       
       if (!response.ok) {
         throw new Error(data.details || data.error || 'Failed to generate image');
       }
 
-      if (data.images && data.images[0]) {
+      if (data.images?.[0]?.url) {
         setGeneratedImage(data.images[0]);
       } else {
+        console.error('Unexpected response format:', data);
         throw new Error('No image was generated');
       }
     } catch (error) {
