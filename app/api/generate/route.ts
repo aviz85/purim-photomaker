@@ -15,39 +15,17 @@ export async function POST(request: Request) {
     console.log('Image data length:', images[0].length);
     console.log('Image data prefix:', images[0].substring(0, 50));
 
-    // Ensure we have a valid base64 image
-    if (!images[0].startsWith('data:image/')) {
-      return NextResponse.json({ error: 'Invalid image format' }, { status: 400 });
-    }
+    // Create a simple array of images
+    const imageUrls = [{
+      "url": images[0],
+      "name": "image001.jpg"
+    }];
 
-    // Extract the base64 data and image type
-    const [header, base64Data] = images[0].split(',');
-    const imageType = header.match(/data:image\/(\w+);base64/)?.[1] || 'jpeg';
-    
-    if (!base64Data) {
-      return NextResponse.json({ error: 'Invalid base64 data' }, { status: 400 });
-    }
-
-    // Create a proper image file name based on type
-    const fileName = `image001.${imageType}`;
-
-    // Create ZIP structure with proper file name and content type
-    const zipData = {
-      'imgs/photo/original/image001/': {
-        fileName,
-        content: base64Data,
-        contentType: `image/${imageType}`
-      }
-    };
-
-    // Convert to base64 ZIP
-    const zipBase64 = btoa(JSON.stringify(zipData));
-    
-    console.log('ZIP data created, attempting API call...');
+    console.log('Attempting API call with direct image data...');
 
     const result = await fal.subscribe("fal-ai/photomaker", {
       input: {
-        image_archive_url: `data:application/zip;base64,${zipBase64}`,
+        images: imageUrls,
         prompt,
         style,
         base_pipeline: "photomaker-style",
