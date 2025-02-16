@@ -20,6 +20,15 @@ type StatusRecord = {
 
 type GenerationResult = Result<PhotomakerOutput>;
 
+type PhotomakerStyle = "(No style)" | "Cinematic" | "Photographic" | "Digital Art" | "Fantasy art" | 
+  "Neonpunk" | "Disney Character" | "Enhance" | "Comic book" | "Lowpoly" | "Line art";
+
+const isValidStyle = (style: unknown): style is PhotomakerStyle => {
+  const validStyles: PhotomakerStyle[] = ["(No style)", "Cinematic", "Photographic", "Digital Art", 
+    "Fantasy art", "Neonpunk", "Disney Character", "Enhance", "Comic book", "Lowpoly", "Line art"];
+  return typeof style === 'string' && validStyles.includes(style as PhotomakerStyle);
+};
+
 export const runtime = 'edge';
 export const maxDuration = 300; // 5 minutes timeout
 
@@ -75,12 +84,13 @@ async function createZipFromImages(images: string[]): Promise<Blob> {
 }
 
 export async function POST(request: Request) {
-  let statusRecord: StatusRecord | null = null;
-  
   try {
     const { images, prompt, style } = await request.json();
+    if (!isValidStyle(style)) {
+      throw new Error('Invalid style parameter');
+    }
     
-    // Create initial status record
+    // Create initial status record and return immediately
     const { data, error: dbError } = await supabase
       .from('generation_status')
       .insert({
@@ -95,18 +105,37 @@ export async function POST(request: Request) {
       throw new Error(`Failed to create status record: ${dbError?.message || 'No data returned'}`);
     }
 
-    statusRecord = data;
     const id = data.id;
 
-    // Update status for ZIP creation
+    // Start processing in background
+    processImages(id, images, prompt, style).catch(error => {
+      console.error('Background processing error:', error);
+      updateStatus(id, 'error', error.message || 'Processing failed');
+    });
+
+    // Return immediately with the status ID
+    return NextResponse.json({ statusId: id }, { status: 201 });
+
+  } catch (error: unknown) {
+    console.error('Error:', error);
+    return NextResponse.json({ 
+      error: 'Failed to generate image',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
+  }
+}
+
+async function processImages(id: string, images: string[], prompt: string, style: PhotomakerStyle) {
+  try {
+    // ZIP creation
     await updateStatus(id, 'processing', 'Creating ZIP file from images...');
     const zipBlob = await createZipFromImages(images);
     
-    // Update status for upload
+    // Upload to fal.ai
     await updateStatus(id, 'processing', 'Uploading images to fal.ai...');
     const zipUrl = await fal.storage.upload(zipBlob);
 
-    // Update status for generation
+    // Generate image
     await updateStatus(id, 'processing', 'Generating image with AI...');
     const result = await fal.run("fal-ai/photomaker", {
       input: {
@@ -122,45 +151,10 @@ export async function POST(request: Request) {
       }
     });
 
-    // Update final status
     await updateStatus(id, 'completed', 'Image generated successfully!', result);
-    return NextResponse.json({ result, statusId: id });
-
-  } catch (error: unknown) {
-    console.error('Error details:', error instanceof Error ? error.message : error);
-    
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
-    // If we have a statusId, update the error status
-    if (statusRecord?.id) {
-      await updateStatus(statusRecord.id, 'error', errorMessage);
-    }
-    
-    // Handle specific error types
-    if (error instanceof Error) {
-      if (error.message.includes('Unauthorized')) {
-        return NextResponse.json({ 
-          error: 'Authentication failed',
-          details: 'API key authentication failed. Please check your credentials.'
-        }, { status: 401 });
-      }
-      if (error.message.includes('Unprocessable Entity')) {
-        return NextResponse.json({ 
-          error: 'Failed to process image',
-          details: 'Please try a different image or make sure the image is clear and shows a face'
-        }, { status: 422 });
-      }
-      if (error.message.includes('JSON')) {
-        return NextResponse.json({ 
-          error: 'Invalid request',
-          details: 'Failed to parse request data'
-        }, { status: 400 });
-      }
-    }
-
-    return NextResponse.json({ 
-      error: 'Failed to generate image',
-      details: errorMessage
-    }, { status: 500 });
+  } catch (error) {
+    console.error('Processing error:', error);
+    await updateStatus(id, 'error', error instanceof Error ? error.message : 'Processing failed');
+    throw error;
   }
 } 
