@@ -1,14 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fal, type Result } from "@fal-ai/client";
 import { createClient } from '@supabase/supabase-js';
-
-interface PhotomakerOutput {
-  images: Array<{
-    url: string;
-  }>;
-}
-
-type GenerationResult = Result<PhotomakerOutput>;
 
 type PhotomakerStyle = "(No style)" | "Cinematic" | "Photographic" | "Digital Art" | "Fantasy art" | 
   "Neonpunk" | "Disney Character" | "Enhance" | "Comic book" | "Lowpoly" | "Line art";
@@ -22,11 +13,6 @@ const isValidStyle = (style: unknown): style is PhotomakerStyle => {
 export const runtime = 'edge';
 export const maxDuration = 300; // 5 minutes timeout
 
-const FAL_KEY = process.env.FAL_KEY;
-if (!FAL_KEY) {
-  throw new Error('FAL_KEY environment variable is not set');
-}
-
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
@@ -35,11 +21,6 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Initialize with credentials
-fal.config({
-  credentials: FAL_KEY
-});
 
 export async function POST(request: Request) {
   try {
