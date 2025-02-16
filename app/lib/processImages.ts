@@ -1,6 +1,5 @@
 // Move all the processing code here (processImages function and its dependencies)
 import { fal, type Result } from "@fal-ai/client";
-import JSZip from 'jszip';
 import { createClient } from '@supabase/supabase-js';
 
 interface PhotomakerOutput {
