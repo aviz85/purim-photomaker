@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { fal, type Result } from "@fal-ai/client";
-import JSZip from 'jszip';
 import { createClient } from '@supabase/supabase-js';
 
 interface PhotomakerOutput {
