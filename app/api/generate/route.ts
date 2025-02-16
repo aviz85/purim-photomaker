@@ -101,7 +101,8 @@ export async function POST(request: Request) {
 
     // Start processing in background
     processImages(id, images, prompt, style).catch(error => {
-      console.error('Background processing error:', error);
+      console.error(`[${id}] Background processing error:`, error);
+      console.error(`[${id}] Error stack:`, error instanceof Error ? error.stack : 'No stack trace');
       updateStatus(id, 'error', error.message || 'Processing failed');
     });
 
@@ -119,15 +120,22 @@ export async function POST(request: Request) {
 
 async function processImages(id: string, images: string[], prompt: string, style: PhotomakerStyle) {
   try {
+    console.log(`[${id}] Starting image processing with ${images.length} images`);
+    
     // ZIP creation
+    console.log(`[${id}] Creating ZIP file...`);
     await updateStatus(id, 'processing', 'Creating ZIP file from images...');
     const zipBlob = await createZipFromImages(images);
+    console.log(`[${id}] ZIP created, size: ${zipBlob.size} bytes`);
     
     // Upload to fal.ai
+    console.log(`[${id}] Uploading to fal.ai...`);
     await updateStatus(id, 'processing', 'Uploading images to fal.ai...');
     const zipUrl = await fal.storage.upload(zipBlob);
+    console.log(`[${id}] Upload complete, URL: ${zipUrl}`);
 
     // Generate image
+    console.log(`[${id}] Starting AI generation...`);
     await updateStatus(id, 'processing', 'Generating image with AI...');
     const result = await fal.run("fal-ai/photomaker", {
       input: {
@@ -142,10 +150,12 @@ async function processImages(id: string, images: string[], prompt: string, style
         guidance_scale: 5,
       }
     });
+    console.log(`[${id}] Generation complete:`, result);
 
     await updateStatus(id, 'completed', 'Image generated successfully!', result);
+    console.log(`[${id}] Process completed successfully`);
   } catch (error) {
-    console.error('Processing error:', error);
+    console.error(`[${id}] Processing error:`, error);
     await updateStatus(id, 'error', error instanceof Error ? error.message : 'Processing failed');
     throw error;
   }
