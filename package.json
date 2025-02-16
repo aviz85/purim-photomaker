@@ -13,6 +13,7 @@
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
     "@supabase/supabase-js": "^2.48.1",
+    "convertapi": "^1.15.0",
     "framer-motion": "^12.4.3",
     "jszip": "^3.10.1",
     "next": "15.1.7",

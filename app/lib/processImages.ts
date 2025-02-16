@@ -1,7 +1,7 @@
 // Move all the processing code here (processImages function and its dependencies)
 import { fal, type Result } from "@fal-ai/client";
 import { createClient } from '@supabase/supabase-js';
-import JSZip from 'jszip';
+import ConvertAPI from 'convertapi';
 
 interface PhotomakerOutput {
   images: Array<{
@@ -18,6 +18,8 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
 );
+
+const convertapi = new ConvertAPI(process.env.CONVERT_API_SECRET!);
 
 async function updateStatus(
   id: string, 
@@ -89,29 +91,13 @@ export async function processImages(id: string, images: string[], prompt: string
     );
     console.log(`[${id}] Public URLs:`, publicUrls);
 
-    const zip = new JSZip();
+    console.log(`[${id}] Converting to ZIP...`);
+    const result = await convertapi.convert('zip', {
+      Files: publicUrls
+    }, 'any');
     
-    // Add files to zip
-    await Promise.all(publicUrls.map(async (url, i) => {
-      console.log(`[${id}] Fetching image ${i + 1} from ${url}`);
-      const response = await fetch(url);
-      const arrayBuffer = await response.arrayBuffer();
-      console.log(`[${id}] Adding image ${i + 1} to ZIP, size: ${arrayBuffer.byteLength} bytes`);
-      zip.file(`image_${i + 1}.jpg`, arrayBuffer);
-    }));
-    
-    // Generate zip
-    console.log(`[${id}] Generating ZIP...`);
-    const zipBlob = await zip.generateAsync({ 
-      type: 'arraybuffer',
-      compression: 'DEFLATE',
-      compressionOptions: { level: 3 }
-    });
-    console.log(`[${id}] ZIP generated, size: ${zipBlob.byteLength} bytes`);
-    
-    console.log(`[${id}] Uploading ZIP to fal.ai...`);
-    const zipUrl = await fal.storage.upload(new Blob([zipBlob]));
-    console.log(`[${id}] ZIP uploaded, URL: ${zipUrl}`);
+    const zipUrl = result.files[0].url
+    console.log(`[${id}] ZIP created, URL:`, zipUrl);
 
     await updateStatus(id, 'processing', 'Generating with AI...');
     const falResult = await fal.run("fal-ai/photomaker", {
