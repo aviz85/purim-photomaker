@@ -2,6 +2,7 @@
 import { fal, type Result } from "@fal-ai/client";
 import { createClient } from '@supabase/supabase-js';
 import ConvertAPI from 'convertapi';
+import JSZip from 'jszip';
 
 interface PhotomakerOutput {
   images: Array<{
@@ -91,13 +92,25 @@ export async function processImages(id: string, images: string[], prompt: string
     );
     console.log(`[${id}] Public URLs:`, publicUrls);
 
-    console.log(`[${id}] Converting to ZIP...`);
-    const result = await convertapi.convert('zip', {
-      Files: publicUrls
-    }, 'any');
+    console.log(`[${id}] Creating ZIP...`);
+    const zip = new JSZip();
     
-    const zipUrl = result.files[0].url
-    console.log(`[${id}] ZIP created, URL:`, zipUrl);
+    // Add files to zip using base64 directly
+    await Promise.all(images.map(async (image, i) => {
+      console.log(`[${id}] Adding image ${i + 1}`);
+      const base64Data = image.split(',')[1];
+      zip.file(`image_${i + 1}.jpg`, base64Data, {base64: true});
+    }));
+    
+    // Generate zip
+    const zipBlob = await zip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 3 }
+    });
+    
+    console.log(`[${id}] Uploading ZIP to fal.ai...`);
+    const zipUrl = await fal.storage.upload(zipBlob);
 
     await updateStatus(id, 'processing', 'Generating with AI...');
     const falResult = await fal.run("fal-ai/photomaker", {
