@@ -185,7 +185,7 @@ export default function Home() {
         throw new Error(data.details || data.error || 'Failed to generate image');
       }
 
-      // Start polling with the status ID
+      // Start polling immediately after getting statusId
       pollStatus(data.statusId);
       pollInterval.current = setInterval(() => pollStatus(data.statusId), 1000);
 
