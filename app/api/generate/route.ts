@@ -82,46 +82,17 @@ export async function POST(request: Request) {
       throw new Error('Invalid style parameter');
     }
     
-    // Create initial status record
-    const { data, error: dbError } = await supabase
-      .from('generation_status')
-      .insert({
-        status: 'started',
-        message: 'Starting image generation...',
-      })
-      .select()
-      .single();
-      
-    if (dbError || !data) {
-      console.error('Database error:', dbError);
-      throw new Error(`Failed to create status record: ${dbError?.message || 'No data returned'}`);
-    }
-
-    const id = data.id;
-
-    // Instead of background processing, start the process and let it run
-    // The client will still get a quick response due to streaming
-    const stream = new TransformStream();
-    const writer = stream.writable.getWriter();
-    const encoder = new TextEncoder();
-
-    // Start processing but don't await it
-    processImages(id, images, prompt, style).catch(error => {
-      console.error(`[${id}] Processing error:`, error);
+    // Create both status and queue records in a transaction
+    const { data, error } = await supabase.rpc('create_generation_job', {
+      p_images: images,
+      p_prompt: prompt,
+      p_style: style
     });
 
-    // Send immediate response with status ID
-    writer.write(encoder.encode(JSON.stringify({ statusId: id })));
-    writer.close();
-
-    return new Response(stream.readable, {
-      status: 201,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-  } catch (error: unknown) {
+    if (error) throw error;
+    
+    return NextResponse.json({ statusId: data.status_id }, { status: 201 });
+  } catch (error) {
     console.error('Error:', error);
     return NextResponse.json({ 
       error: 'Failed to generate image',
