@@ -40,25 +40,16 @@ async function createZipFromImages(images: string[]): Promise<Blob> {
   console.log('Starting ZIP creation with', images.length, 'images');
   const zip = new JSZip();
   
-  // Convert base64 to URLs first
-  const imageUrls = await Promise.all(images.map(async (image, i) => {
-    console.log(`Creating blob for image ${i + 1}`);
-    const base64Data = image.split(',')[1];
-    const blob = await fetch(`data:image/jpeg;base64,${base64Data}`).then(r => r.blob());
-    const url = URL.createObjectURL(blob);
-    return { url, index: i };
-  }));
-
-  // Then create ZIP from URLs
-  await Promise.all(imageUrls.map(async ({ url, index }) => {
+  // Process images directly
+  await Promise.all(images.map(async (image, i) => {
     try {
-      console.log(`Fetching and adding image ${index + 1} to ZIP`);
-      const response = await fetch(url);
-      const blob = await response.blob();
-      zip.file(`image_${index + 1}.jpg`, blob);
-      URL.revokeObjectURL(url); // Clean up
+      console.log(`Processing image ${i + 1}`);
+      const base64Data = image.split(',')[1];
+      const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+      zip.file(`image_${i + 1}.jpg`, binaryData);
+      console.log(`Added image ${i + 1} to ZIP`);
     } catch (error) {
-      console.error(`Error processing image ${index + 1}:`, error);
+      console.error(`Error processing image ${i + 1}:`, error);
       throw error;
     }
   }));
