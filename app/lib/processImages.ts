@@ -1,6 +1,7 @@
 // Move all the processing code here (processImages function and its dependencies)
 import { fal, type Result } from "@fal-ai/client";
 import { createClient } from '@supabase/supabase-js';
+import JSZip from 'jszip';
 
 interface PhotomakerOutput {
   images: Array<{
@@ -54,6 +55,27 @@ async function uploadImagesToSupabase(images: string[], jobId: string): Promise<
   return urls;
 }
 
+async function cleanupStorage(jobId: string) {
+  const { data, error } = await supabase.storage
+    .from('photomaker')
+    .list(`jobs/${jobId}`);
+
+  if (error) {
+    console.error(`Failed to list files for cleanup: ${error.message}`);
+    return;
+  }
+
+  if (data.length > 0) {
+    const { error: deleteError } = await supabase.storage
+      .from('photomaker')
+      .remove(data.map(file => `jobs/${jobId}/${file.name}`));
+
+    if (deleteError) {
+      console.error(`Failed to delete files: ${deleteError.message}`);
+    }
+  }
+}
+
 export async function processImages(id: string, images: string[], prompt: string, style: PhotomakerStyle) {
   try {
     console.log(`[${id}] Starting image processing`);
@@ -61,12 +83,40 @@ export async function processImages(id: string, images: string[], prompt: string
     await updateStatus(id, 'processing', 'Uploading images...');
     const imageUrls = await uploadImagesToSupabase(images, id);
     
+    await updateStatus(id, 'processing', 'Creating ZIP...');
+    const publicUrls = imageUrls.map(url => 
+      supabase.storage.from('photomaker').getPublicUrl(url).data.publicUrl
+    );
+    console.log(`[${id}] Public URLs:`, publicUrls);
+
+    const zip = new JSZip();
+    
+    // Add files to zip
+    await Promise.all(publicUrls.map(async (url, i) => {
+      console.log(`[${id}] Fetching image ${i + 1} from ${url}`);
+      const response = await fetch(url);
+      const blob = await response.blob();
+      console.log(`[${id}] Adding image ${i + 1} to ZIP, size: ${blob.size} bytes`);
+      zip.file(`image_${i + 1}.jpg`, blob);
+    }));
+    
+    // Generate zip
+    console.log(`[${id}] Generating ZIP...`);
+    const zipBlob = await zip.generateAsync({ 
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 3 }
+    });
+    console.log(`[${id}] ZIP generated, size: ${zipBlob.size} bytes`);
+    
+    console.log(`[${id}] Uploading ZIP to fal.ai...`);
+    const zipUrl = await fal.storage.upload(zipBlob);
+    console.log(`[${id}] ZIP uploaded, URL: ${zipUrl}`);
+
     await updateStatus(id, 'processing', 'Generating with AI...');
-    const result = await fal.run("fal-ai/photomaker", {
+    const falResult = await fal.run("fal-ai/photomaker", {
       input: {
-        image_archive_url: supabase.storage
-          .from('photomaker')
-          .getPublicUrl(imageUrls[0]).data.publicUrl,
+        image_archive_url: zipUrl,
         prompt,
         style,
         base_pipeline: "photomaker-style",
@@ -78,21 +128,26 @@ export async function processImages(id: string, images: string[], prompt: string
       }
     });
 
-    console.log(`[${id}] Generation result:`, result);
+    console.log(`[${id}] Generation result:`, falResult);
     
     // Format result according to the PhotomakerOutput type
     const formattedResult: GenerationResult = {
       data: {
-        images: result.data.images
+        images: falResult.data.images
       },
-      requestId: result.requestId
+      requestId: falResult.requestId
     };
 
     await updateStatus(id, 'completed', 'Image generated successfully!', formattedResult);
     console.log(`[${id}] Process completed successfully`);
+    
+    // Cleanup uploaded images
+    await cleanupStorage(id);
   } catch (error) {
     console.error(`[${id}] Processing error:`, error);
     await updateStatus(id, 'error', error instanceof Error ? error.message : 'Processing failed');
+    // Cleanup on error too
+    await cleanupStorage(id);
     throw error;
   }
 } 
