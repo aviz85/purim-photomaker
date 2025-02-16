@@ -43,24 +43,21 @@ export async function POST(request: Request) {
     const zipBlob = await createZipFromImages(images);
     const zipUrl = await fal.storage.upload(zipBlob);
 
-    // Start the generation but don't wait for it
-    const result = await fal.subscribe("fal-ai/photomaker", {
+    // Use REST endpoint instead of subscription
+    const result = await fal.rest.run("fal-ai/photomaker", {
       input: {
         image_archive_url: zipUrl,
         prompt,
         style,
         base_pipeline: "photomaker-style",
         negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-        num_inference_steps: 50,
+        num_inference_steps: 30, // Reduced from 50
         style_strength: 20,
         num_images: 1,
         guidance_scale: 5,
-      },
-      pollInterval: 1000,
-      logs: true,
+      }
     });
 
-    // Return immediately with the queue ID
     return NextResponse.json({ result });
 
   } catch (error: unknown) {

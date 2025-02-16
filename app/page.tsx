@@ -144,29 +144,11 @@ export default function Home() {
       }
 
       const { result } = data;
-      setGeneratedImage(result.images[0]);
-      
-      // Subscribe to real-time updates
-      subscriptionRef.current?.close();
-      subscriptionRef.current = fal.realtime.connect(result.id, {
-        onResult: (result) => {
-          if (result.logs?.length > 0) {
-            const lastLog = result.logs[result.logs.length - 1];
-            setProgressMessage(lastLog.message);
-            
-            if (lastLog.message.includes('%')) {
-              const match = lastLog.message.match(/(\d+)%/);
-              if (match) {
-                setProgress(parseInt(match[1]));
-              }
-            }
-          }
-        },
-        onError: (error) => {
-          console.error('Realtime error:', error);
-          setError('Failed to get progress updates');
-        }
-      });
+      if (result.images?.[0]) {
+        setGeneratedImage(result.images[0]);
+      } else {
+        throw new Error('No image was generated');
+      }
 
     } catch (error) {
       console.error('Error generating image:', error);
