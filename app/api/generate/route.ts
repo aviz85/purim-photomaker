@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     const { images, prompt, style } = await request.json();
     
     // Create initial status record
-    const { data } = await supabase
+    const { data, error: dbError } = await supabase
       .from('generation_status')
       .insert({
         status: 'started',
@@ -86,7 +86,11 @@ export async function POST(request: Request) {
       .select()
       .single();
       
-    if (!data) throw new Error('Failed to create status record');
+    if (dbError || !data) {
+      console.error('Database error:', dbError);
+      throw new Error(`Failed to create status record: ${dbError?.message || 'No data returned'}`);
+    }
+
     statusRecord = data;
     const id = data.id;
 
