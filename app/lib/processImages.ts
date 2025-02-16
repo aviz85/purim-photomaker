@@ -40,7 +40,7 @@ async function createZipFromImages(images: string[]): Promise<Blob> {
   console.log('Starting ZIP creation with', images.length, 'images');
   const zip = new JSZip();
   
-  // Process images in chunks to avoid memory issues
+  // Process images in chunks
   const CHUNK_SIZE = 2;
   for (let i = 0; i < images.length; i += CHUNK_SIZE) {
     const chunk = images.slice(i, i + CHUNK_SIZE);
@@ -52,7 +52,7 @@ async function createZipFromImages(images: string[]): Promise<Blob> {
         console.log(`Processing image ${currentIndex + 1}`);
         const base64Data = image.split(',')[1];
         const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-        zip.file(`image_${currentIndex + 1}.jpg`, binaryData);
+        zip.file(`image_${currentIndex + 1}.jpg`, binaryData.buffer);
         console.log(`Added image ${currentIndex + 1} to ZIP`);
       } catch (error) {
         console.error(`Error processing image: ${error instanceof Error ? error.message : error}`);
@@ -63,16 +63,19 @@ async function createZipFromImages(images: string[]): Promise<Blob> {
   
   console.log('Starting ZIP compression...');
   try {
-    const zipBlob = await zip.generateAsync({ 
-      type: 'blob',
+    // Generate as ArrayBuffer first
+    const zipBuffer = await zip.generateAsync({ 
+      type: 'arraybuffer',
       compression: 'DEFLATE',
       compressionOptions: {
-        level: 3 // Lower compression level for faster processing
+        level: 1 // Minimal compression for speed
       }
     }, (metadata) => {
       console.log(`ZIP progress: ${metadata.percent.toFixed(1)}%`);
     });
     
+    // Convert to Blob
+    const zipBlob = new Blob([zipBuffer], { type: 'application/zip' });
     console.log('ZIP generated, size:', zipBlob.size);
     return zipBlob;
   } catch (error) {
