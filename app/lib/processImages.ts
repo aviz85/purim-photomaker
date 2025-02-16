@@ -78,7 +78,17 @@ export async function processImages(id: string, images: string[], prompt: string
       }
     });
 
-    await updateStatus(id, 'completed', 'Image generated successfully!', result);
+    console.log(`[${id}] Generation result:`, result);
+    
+    // Format result according to the PhotomakerOutput type
+    const formattedResult: GenerationResult = {
+      data: {
+        images: result.data.images
+      },
+      requestId: result.requestId
+    };
+
+    await updateStatus(id, 'completed', 'Image generated successfully!', formattedResult);
     console.log(`[${id}] Process completed successfully`);
   } catch (error) {
     console.error(`[${id}] Processing error:`, error);

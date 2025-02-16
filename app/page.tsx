@@ -127,35 +127,38 @@ export default function Home() {
     );
   }, [uploadedImages.length]);
 
-  const pollStatus = useCallback(async (id: string) => {
-    const { data, error } = await supabase
-      .from('generation_status')
-      .select('*')
-      .eq('id', id)
-      .single();
+  const pollStatus = async (statusId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('generation_status')
+        .select('*')
+        .eq('id', statusId)
+        .single();
 
-    if (error) {
+      if (error) throw error;
+      console.log('Poll result:', data);
+
+      if (data) {
+        setStatus(data.status);
+        setStatusMessage(data.message);
+        
+        if (data.status === 'completed' && data.result) {
+          console.log('Setting generated image:', data.result);
+          setGeneratedImage(data.result.images[0]);
+          if (pollInterval.current) {
+            clearInterval(pollInterval.current);
+          }
+        } else if (data.status === 'error') {
+          setError(data.message);
+          if (pollInterval.current) {
+            clearInterval(pollInterval.current);
+          }
+        }
+      }
+    } catch (error) {
       console.error('Error polling status:', error);
-      return;
     }
-
-    setStatus(data.status);
-    setStatusMessage(data.message);
-
-    if (data.status === 'completed') {
-      if (pollInterval.current) {
-        clearInterval(pollInterval.current);
-      }
-      setGeneratedImage(data.result.images[0]);
-      setIsLoading(false);
-    } else if (data.status === 'error') {
-      if (pollInterval.current) {
-        clearInterval(pollInterval.current);
-      }
-      setError(data.message);
-      setIsLoading(false);
-    }
-  }, []);
+  };
 
   const handleGenerate = async () => {
     if (!selectedCostume || uploadedImages.length === 0) return;
