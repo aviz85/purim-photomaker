@@ -74,7 +74,8 @@ async function createZipFromImages(images: string[]): Promise<Blob> {
   // Add each image to the ZIP
   for (let i = 0; i < images.length; i++) {
     const base64Data = images[i].split(',')[1];
-    const binaryData = Buffer.from(base64Data, 'base64');
+    // Convert base64 to Uint8Array instead of using Buffer
+    const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
     zip.file(`image_${i + 1}.jpg`, binaryData);
   }
   
