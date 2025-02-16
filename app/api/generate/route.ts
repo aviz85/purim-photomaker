@@ -7,7 +7,7 @@ type StatusRecord = {
   id: string;
   status: string;
   message: string;
-  result: any;
+  result: GenerationResult | null;
   created_at: string;
   updated_at: string;
 };
@@ -43,7 +43,12 @@ fal.config({
   credentials: FAL_KEY
 });
 
-async function updateStatus(id: string, status: string, message: string, result?: any) {
+async function updateStatus(
+  id: string, 
+  status: string, 
+  message: string, 
+  result?: GenerationResult
+) {
   await supabase
     .from('generation_status')
     .update({ 
