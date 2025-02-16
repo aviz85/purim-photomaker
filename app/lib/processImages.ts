@@ -129,6 +129,11 @@ export async function processImages(id: string, images: string[], prompt: string
     });
 
     console.log(`[${id}] Generation result:`, falResult);
+    console.log(`[${id}] Result data structure:`, {
+      status: falResult.status,
+      images: falResult.data?.images,
+      requestId: falResult.requestId
+    });
     
     // Format result according to the PhotomakerOutput type
     const formattedResult: GenerationResult = {
@@ -137,6 +142,7 @@ export async function processImages(id: string, images: string[], prompt: string
       },
       requestId: falResult.requestId
     };
+    console.log(`[${id}] Formatted result for DB:`, formattedResult);
 
     await updateStatus(id, 'completed', 'Image generated successfully!', formattedResult);
     console.log(`[${id}] Process completed successfully`);
