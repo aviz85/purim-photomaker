@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Tab } from '@headlessui/react';
 import { COSTUMES } from '../lib/constants';
 import { Costume, GeneratedImage } from '../lib/types';
-import Image, { StaticImageData } from 'next/image';
+import Image from 'next/image';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
