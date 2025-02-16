@@ -95,22 +95,22 @@ export async function processImages(id: string, images: string[], prompt: string
     await Promise.all(publicUrls.map(async (url, i) => {
       console.log(`[${id}] Fetching image ${i + 1} from ${url}`);
       const response = await fetch(url);
-      const blob = await response.blob();
-      console.log(`[${id}] Adding image ${i + 1} to ZIP, size: ${blob.size} bytes`);
-      zip.file(`image_${i + 1}.jpg`, blob);
+      const arrayBuffer = await response.arrayBuffer();
+      console.log(`[${id}] Adding image ${i + 1} to ZIP, size: ${arrayBuffer.byteLength} bytes`);
+      zip.file(`image_${i + 1}.jpg`, arrayBuffer);
     }));
     
     // Generate zip
     console.log(`[${id}] Generating ZIP...`);
     const zipBlob = await zip.generateAsync({ 
-      type: 'blob',
+      type: 'arraybuffer',
       compression: 'DEFLATE',
       compressionOptions: { level: 3 }
     });
-    console.log(`[${id}] ZIP generated, size: ${zipBlob.size} bytes`);
+    console.log(`[${id}] ZIP generated, size: ${zipBlob.byteLength} bytes`);
     
     console.log(`[${id}] Uploading ZIP to fal.ai...`);
-    const zipUrl = await fal.storage.upload(zipBlob);
+    const zipUrl = await fal.storage.upload(new Blob([zipBlob]));
     console.log(`[${id}] ZIP uploaded, URL: ${zipUrl}`);
 
     await updateStatus(id, 'processing', 'Generating with AI...');
@@ -130,8 +130,7 @@ export async function processImages(id: string, images: string[], prompt: string
 
     console.log(`[${id}] Generation result:`, falResult);
     console.log(`[${id}] Result data structure:`, {
-      status: falResult.status,
-      images: falResult.data?.images,
+      data: falResult.data,
       requestId: falResult.requestId
     });
     
