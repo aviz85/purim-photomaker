@@ -11,6 +11,46 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
 }
 
+async function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // Calculate new dimensions (max 800px)
+        const maxSize = 800;
+        if (width > height && width > maxSize) {
+          height *= maxSize / width;
+          width = maxSize;
+        } else if (height > maxSize) {
+          width *= maxSize / height;
+          height = maxSize;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.7)); // Compress to JPEG with 70% quality
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function Home() {
   const [selectedGender, setSelectedGender] = useState<'boy' | 'girl'>('boy');
   const [selectedCostume, setSelectedCostume] = useState<Costume | null>(null);
@@ -27,6 +67,18 @@ export default function Home() {
     setError(null);
     setGeneratedImage(null);
     
+    // Check number of files
+    if (files.length > 5) {
+      setError('ניתן להעלות עד 5 תמונות');
+      return;
+    }
+
+    // Check total number of images (existing + new)
+    if (uploadedImages.length + files.length > 5) {
+      setError(`ניתן להעלות עד 5 תמונות (כרגע יש ${uploadedImages.length} תמונות)`);
+      return;
+    }
+    
     // Validate file size (max 5MB per file)
     const oversizedFiles = files.filter(file => file.size > 5 * 1024 * 1024);
     if (oversizedFiles.length > 0) {
@@ -41,19 +93,16 @@ export default function Home() {
       return;
     }
     
-    // Read all files as base64
+    // Compress and read all files
     Promise.all(
-      files.map(file => new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
-        reader.readAsDataURL(file);
-      }))
+      files.map(file => compressImage(file))
     ).then(
-      base64Images => setUploadedImages(base64Images),
-      err => setError(err instanceof Error ? err.message : 'Failed to read image files')
+      compressedImages => {
+        setUploadedImages(prevImages => [...prevImages, ...compressedImages]);
+      },
+      err => setError(err instanceof Error ? err.message : 'Failed to process image files')
     );
-  }, []);
+  }, [uploadedImages.length]);
 
   const handleGenerate = async () => {
     if (!selectedCostume || uploadedImages.length === 0) return;
@@ -182,7 +231,10 @@ export default function Home() {
                 <li>• רצוי תמונות חזיתיות (פרונטליות)</li>
                 <li>• הפנים צריכות להיות מוארות היטב</li>
                 <li>• גודל מקסימלי: 5MB לכל תמונה</li>
-                <li>• ניתן להעלות מספר תמונות</li>
+                <li>• ניתן להעלות עד 5 תמונות</li>
+                {uploadedImages.length > 0 && (
+                  <li className="font-medium">• הועלו {uploadedImages.length}/5 תמונות</li>
+                )}
               </ul>
             </div>
             <label className="w-full max-w-md flex flex-col items-center px-4 py-6 bg-purple-50 text-purple rounded-lg shadow-lg tracking-wide border border-purple-200 cursor-pointer hover:bg-purple-100">
