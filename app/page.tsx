@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tab } from '@headlessui/react';
 import { COSTUMES } from '../lib/constants';
@@ -61,6 +61,15 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState('');
+  const subscriptionRef = useRef<ReturnType<typeof fal.realtime.connect> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.close();
+      }
+    };
+  }, []);
 
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -138,7 +147,8 @@ export default function Home() {
       setGeneratedImage(result.images[0]);
       
       // Subscribe to real-time updates
-      const subscription = fal.realtime.connect(result.id, {
+      subscriptionRef.current?.close();
+      subscriptionRef.current = fal.realtime.connect(result.id, {
         onResult: (result) => {
           if (result.logs?.length > 0) {
             const lastLog = result.logs[result.logs.length - 1];
