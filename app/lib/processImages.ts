@@ -40,30 +40,45 @@ async function createZipFromImages(images: string[]): Promise<Blob> {
   console.log('Starting ZIP creation with', images.length, 'images');
   const zip = new JSZip();
   
-  // Process images directly
-  await Promise.all(images.map(async (image, i) => {
-    try {
-      console.log(`Processing image ${i + 1}`);
-      const base64Data = image.split(',')[1];
-      const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-      zip.file(`image_${i + 1}.jpg`, binaryData);
-      console.log(`Added image ${i + 1} to ZIP`);
-    } catch (error) {
-      console.error(`Error processing image ${i + 1}:`, error);
-      throw error;
-    }
-  }));
+  // Process images in chunks to avoid memory issues
+  const CHUNK_SIZE = 2;
+  for (let i = 0; i < images.length; i += CHUNK_SIZE) {
+    const chunk = images.slice(i, i + CHUNK_SIZE);
+    console.log(`Processing chunk ${i/CHUNK_SIZE + 1} of ${Math.ceil(images.length/CHUNK_SIZE)}`);
+    
+    await Promise.all(chunk.map(async (image, index) => {
+      try {
+        const currentIndex = i + index;
+        console.log(`Processing image ${currentIndex + 1}`);
+        const base64Data = image.split(',')[1];
+        const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+        zip.file(`image_${currentIndex + 1}.jpg`, binaryData);
+        console.log(`Added image ${currentIndex + 1} to ZIP`);
+      } catch (error) {
+        console.error(`Error processing image: ${error instanceof Error ? error.message : error}`);
+        throw error;
+      }
+    }));
+  }
   
-  console.log('Generating final ZIP');
-  const zipBlob = await zip.generateAsync({ 
-    type: 'blob',
-    compression: 'DEFLATE',
-    compressionOptions: {
-      level: 6 
-    }
-  });
-  console.log('ZIP generated, size:', zipBlob.size);
-  return zipBlob;
+  console.log('Starting ZIP compression...');
+  try {
+    const zipBlob = await zip.generateAsync({ 
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: {
+        level: 3 // Lower compression level for faster processing
+      }
+    }, (metadata) => {
+      console.log(`ZIP progress: ${metadata.percent.toFixed(1)}%`);
+    });
+    
+    console.log('ZIP generated, size:', zipBlob.size);
+    return zipBlob;
+  } catch (error) {
+    console.error('ZIP generation error:', error);
+    throw new Error(`Failed to generate ZIP: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 export async function processImages(id: string, images: string[], prompt: string, style: PhotomakerStyle) {
