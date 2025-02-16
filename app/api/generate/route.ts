@@ -9,15 +9,6 @@ interface PhotomakerOutput {
   }>;
 }
 
-type StatusRecord = {
-  id: string;
-  status: string;
-  message: string;
-  result: GenerationResult | null;
-  created_at: string;
-  updated_at: string;
-};
-
 type GenerationResult = Result<PhotomakerOutput>;
 
 type PhotomakerStyle = "(No style)" | "Cinematic" | "Photographic" | "Digital Art" | "Fantasy art" | 
