@@ -36,25 +36,6 @@ async function updateStatus(
     .eq('id', id);
 }
 
-async function uploadImagesToSupabase(images: string[], jobId: string): Promise<string[]> {
-  const urls = await Promise.all(images.map(async (image, index) => {
-    const base64Data = image.split(',')[1];
-    const fileName = `jobs/${jobId}/image_${index + 1}.jpg`;
-    
-    const { data, error } = await supabase.storage
-      .from('photomaker')
-      .upload(fileName, Buffer.from(base64Data, 'base64'), {
-        contentType: 'image/jpeg',
-        cacheControl: '3600'
-      });
-
-    if (error) throw error;
-    return data.path;
-  }));
-
-  return urls;
-}
-
 async function cleanupStorage(jobId: string) {
   const { data, error } = await supabase.storage
     .from('photomaker')
