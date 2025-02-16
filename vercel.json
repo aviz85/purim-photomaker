@@ -4,5 +4,9 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "outputDirectory": ".next",
-  "regions": ["fra1"]
+  "regions": ["fra1"],
+  "crons": [{
+    "path": "/api/worker",
+    "schedule": "* * * * *"
+  }]
 } 
