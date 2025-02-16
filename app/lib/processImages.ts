@@ -1,7 +1,6 @@
 // Move all the processing code here (processImages function and its dependencies)
 import { fal, type Result } from "@fal-ai/client";
 import { createClient } from '@supabase/supabase-js';
-import ConvertAPI from 'convertapi';
 import JSZip from 'jszip';
 
 interface PhotomakerOutput {
@@ -19,8 +18,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
 );
-
-const convertapi = new ConvertAPI(process.env.CONVERT_API_SECRET!);
 
 async function updateStatus(
   id: string, 
@@ -87,12 +84,6 @@ export async function processImages(id: string, images: string[], prompt: string
     const imageUrls = await uploadImagesToSupabase(images, id);
     
     await updateStatus(id, 'processing', 'Creating ZIP...');
-    const publicUrls = imageUrls.map(url => 
-      supabase.storage.from('photomaker').getPublicUrl(url).data.publicUrl
-    );
-    console.log(`[${id}] Public URLs:`, publicUrls);
-
-    console.log(`[${id}] Creating ZIP...`);
     const zip = new JSZip();
     
     // Add files to zip using base64 directly
