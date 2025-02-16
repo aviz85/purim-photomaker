@@ -20,11 +20,6 @@ type StatusRecord = {
 
 type GenerationResult = Result<PhotomakerOutput>;
 
-type ErrorResponse = {
-  error: string;
-  details?: string;
-};
-
 export const runtime = 'edge';
 export const maxDuration = 300; // 5 minutes timeout
 
