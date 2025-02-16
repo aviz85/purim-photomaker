@@ -65,18 +65,16 @@ export default function Home() {
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
-  const [progressMessage, setProgressMessage] = useState('');
   const subscriptionRef = useRef<ReturnType<typeof fal.realtime.connect> | null>(null);
-  const [statusId, setStatusId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const pollInterval = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
+    const currentSubscription = subscriptionRef.current;
     return () => {
-      if (subscriptionRef.current) {
-        subscriptionRef.current.close();
+      if (currentSubscription) {
+        currentSubscription.close();
       }
       if (pollInterval.current) {
         clearInterval(pollInterval.current);

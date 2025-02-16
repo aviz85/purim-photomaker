@@ -12,6 +12,19 @@ type StatusRecord = {
   updated_at: string;
 };
 
+type GenerationResult = {
+  images: Array<{
+    url: string;
+    seed: number;
+  }>;
+  // add other known fields
+};
+
+type ErrorResponse = {
+  error: string;
+  details?: string;
+};
+
 export const runtime = 'edge';
 export const maxDuration = 300; // 5 minutes timeout
 
