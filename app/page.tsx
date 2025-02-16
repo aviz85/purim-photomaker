@@ -7,6 +7,12 @@ import { COSTUMES } from '../lib/constants';
 import { Costume, GeneratedImage } from '../lib/types';
 import Image from 'next/image';
 import { fal } from "@fal-ai/client";
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -62,11 +68,18 @@ export default function Home() {
   const [progress, setProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState('');
   const subscriptionRef = useRef<ReturnType<typeof fal.realtime.connect> | null>(null);
+  const [statusId, setStatusId] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const pollInterval = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
     return () => {
       if (subscriptionRef.current) {
         subscriptionRef.current.close();
+      }
+      if (pollInterval.current) {
+        clearInterval(pollInterval.current);
       }
     };
   }, []);
@@ -116,13 +129,44 @@ export default function Home() {
     );
   }, [uploadedImages.length]);
 
+  const pollStatus = useCallback(async (id: string) => {
+    const { data, error } = await supabase
+      .from('generation_status')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('Error polling status:', error);
+      return;
+    }
+
+    setStatus(data.status);
+    setStatusMessage(data.message);
+
+    if (data.status === 'completed') {
+      if (pollInterval.current) {
+        clearInterval(pollInterval.current);
+      }
+      setGeneratedImage(data.result.images[0]);
+      setIsLoading(false);
+    } else if (data.status === 'error') {
+      if (pollInterval.current) {
+        clearInterval(pollInterval.current);
+      }
+      setError(data.message);
+      setIsLoading(false);
+    }
+  }, []);
+
   const handleGenerate = async () => {
     if (!selectedCostume || uploadedImages.length === 0) return;
 
     setIsLoading(true);
     setError(null);
-    setProgress(0);
-    setProgressMessage('מתחיל...');
+    setGeneratedImage(null);
+    setStatus(null);
+    setStatusMessage(null);
     
     try {
       const response = await fetch('/api/generate', {
@@ -143,17 +187,19 @@ export default function Home() {
         throw new Error(data.details || data.error || 'Failed to generate image');
       }
 
-      const { result } = data;
-      if (result.images?.[0]) {
-        setGeneratedImage(result.images[0]);
-      } else {
-        throw new Error('No image was generated');
+      setStatusId(data.statusId);
+      
+      // Start polling
+      if (pollInterval.current) {
+        clearInterval(pollInterval.current);
       }
+      
+      pollStatus(data.statusId);
+      pollInterval.current = setInterval(() => pollStatus(data.statusId), 1000);
 
     } catch (error) {
       console.error('Error generating image:', error);
       setError(error instanceof Error ? error.message : 'Failed to generate image');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -288,10 +334,12 @@ export default function Home() {
               <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
                 <div 
                   className="bg-purple-600 h-2.5 rounded-full transition-all duration-300" 
-                  style={{ width: `${progress}%` }}
+                  style={{ width: status === 'started' ? '10%' : 
+                           status === 'processing' ? '50%' : 
+                           status === 'completed' ? '100%' : '0%' }}
                 ></div>
               </div>
-              <p className="text-sm text-purple-600">{progressMessage}</p>
+              <p className="text-sm text-purple-600">{statusMessage || 'מתחיל...'}</p>
             </div>
           )}
           <button
@@ -305,7 +353,7 @@ export default function Home() {
             onClick={handleGenerate}
             disabled={isLoading || !selectedCostume || uploadedImages.length === 0}
           >
-            {isLoading ? progressMessage : 'צור תמונה קסומה!'}
+            {isLoading ? 'ממתין להסתיים...' : 'צור תמונה קסומה!'}
           </button>
         </div>
 

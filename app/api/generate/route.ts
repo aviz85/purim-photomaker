@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
 import { fal } from "@fal-ai/client";
 import JSZip from 'jszip';
+import { createClient } from '@supabase/supabase-js';
+
+type StatusRecord = {
+  id: string;
+  status: string;
+  message: string;
+  result: any;
+  created_at: string;
+  updated_at: string;
+};
 
 export const runtime = 'edge';
 export const maxDuration = 300; // 5 minutes timeout
@@ -10,10 +20,27 @@ if (!FAL_KEY) {
   throw new Error('FAL_KEY environment variable is not set');
 }
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_KEY!
+);
+
 // Initialize with credentials
 fal.config({
   credentials: FAL_KEY
 });
+
+async function updateStatus(id: string, status: string, message: string, result?: any) {
+  await supabase
+    .from('generation_status')
+    .update({ 
+      status,
+      message,
+      result: result || null,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id);
+}
 
 async function createZipFromImages(images: string[]): Promise<Blob> {
   const zip = new JSZip();
@@ -31,19 +58,35 @@ async function createZipFromImages(images: string[]): Promise<Blob> {
 }
 
 export async function POST(request: Request) {
+  let statusRecord: StatusRecord | null = null;
+  
   try {
     const { images, prompt, style } = await request.json();
     
-    // Debug the incoming data
-    console.log('Number of images:', images.length);
-    console.log('First image data length:', images[0].length);
-    console.log('First image data prefix:', images[0].substring(0, 50));
+    // Create initial status record
+    const { data } = await supabase
+      .from('generation_status')
+      .insert({
+        status: 'started',
+        message: 'Starting image generation...',
+      })
+      .select()
+      .single();
+      
+    if (!data) throw new Error('Failed to create status record');
+    statusRecord = data;
+    const id = data.id;
 
-    // Create and upload ZIP immediately
+    // Update status for ZIP creation
+    await updateStatus(id, 'processing', 'Creating ZIP file from images...');
     const zipBlob = await createZipFromImages(images);
+    
+    // Update status for upload
+    await updateStatus(id, 'processing', 'Uploading images to fal.ai...');
     const zipUrl = await fal.storage.upload(zipBlob);
 
-    // Use direct run method
+    // Update status for generation
+    await updateStatus(id, 'processing', 'Generating image with AI...');
     const result = await fal.run("fal-ai/photomaker", {
       input: {
         image_archive_url: zipUrl,
@@ -58,10 +101,19 @@ export async function POST(request: Request) {
       }
     });
 
-    return NextResponse.json({ result });
+    // Update final status
+    await updateStatus(id, 'completed', 'Image generated successfully!', result);
+    return NextResponse.json({ result, statusId: id });
 
   } catch (error: unknown) {
     console.error('Error details:', error instanceof Error ? error.message : error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // If we have a statusId, update the error status
+    if (statusRecord?.id) {
+      await updateStatus(statusRecord.id, 'error', errorMessage);
+    }
     
     // Handle specific error types
     if (error instanceof Error) {
@@ -87,7 +139,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ 
       error: 'Failed to generate image',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: errorMessage
     }, { status: 500 });
   }
 } 
