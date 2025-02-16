@@ -6,6 +6,7 @@ import { Tab } from '@headlessui/react';
 import { COSTUMES } from '../lib/constants';
 import { Costume, GeneratedImage } from '../lib/types';
 import Image from 'next/image';
+import { fal } from "@fal-ai/client";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -58,6 +59,8 @@ export default function Home() {
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [progressMessage, setProgressMessage] = useState('');
 
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -109,6 +112,8 @@ export default function Home() {
 
     setIsLoading(true);
     setError(null);
+    setProgress(0);
+    setProgressMessage('מתחיל...');
     
     try {
       const response = await fetch('/api/generate', {
@@ -123,24 +128,36 @@ export default function Home() {
         }),
       });
 
-      let data;
-      try {
-        data = await response.json();
-      } catch (e) {
-        console.error('Failed to parse response:', e);
-        throw new Error('Invalid response from server');
-      }
+      const data = await response.json();
       
       if (!response.ok) {
         throw new Error(data.details || data.error || 'Failed to generate image');
       }
 
-      if (data.images?.[0]?.url) {
-        setGeneratedImage(data.images[0]);
-      } else {
-        console.error('Unexpected response format:', data);
-        throw new Error('No image was generated');
-      }
+      const { result } = data;
+      setGeneratedImage(result.images[0]);
+      
+      // Subscribe to real-time updates
+      const subscription = fal.realtime.connect(result.id, {
+        onResult: (result) => {
+          if (result.logs?.length > 0) {
+            const lastLog = result.logs[result.logs.length - 1];
+            setProgressMessage(lastLog.message);
+            
+            if (lastLog.message.includes('%')) {
+              const match = lastLog.message.match(/(\d+)%/);
+              if (match) {
+                setProgress(parseInt(match[1]));
+              }
+            }
+          }
+        },
+        onError: (error) => {
+          console.error('Realtime error:', error);
+          setError('Failed to get progress updates');
+        }
+      });
+
     } catch (error) {
       console.error('Error generating image:', error);
       setError(error instanceof Error ? error.message : 'Failed to generate image');
@@ -274,6 +291,17 @@ export default function Home() {
               {error}
             </div>
           )}
+          {isLoading && (
+            <div className="mb-4">
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                <div 
+                  className="bg-purple-600 h-2.5 rounded-full transition-all duration-300" 
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-purple-600">{progressMessage}</p>
+            </div>
+          )}
           <button
             className={classNames(
               'px-8 py-3 rounded-lg text-lg font-medium',
@@ -285,7 +313,7 @@ export default function Home() {
             onClick={handleGenerate}
             disabled={isLoading || !selectedCostume || uploadedImages.length === 0}
           >
-            {isLoading ? 'יוצר תמונה...' : 'צור תמונה קסומה!'}
+            {isLoading ? progressMessage : 'צור תמונה קסומה!'}
           </button>
         </div>
 

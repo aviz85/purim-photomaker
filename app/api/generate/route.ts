@@ -3,6 +3,7 @@ import { fal } from "@fal-ai/client";
 import JSZip from 'jszip';
 
 export const runtime = 'edge';
+export const maxDuration = 300; // 5 minutes timeout
 
 const FAL_KEY = process.env.FAL_KEY;
 if (!FAL_KEY) {
@@ -49,43 +50,24 @@ export async function POST(request: Request) {
 
     console.log('Attempting API call...');
 
-    try {
-      const result = await fal.subscribe("fal-ai/photomaker", {
-        input: {
-          image_archive_url: zipUrl,
-          prompt,
-          style,
-          base_pipeline: "photomaker-style",
-          negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-          num_inference_steps: 50,
-          style_strength: 20,
-          num_images: 1,
-          guidance_scale: 5,
-        },
-      });
+    const result = await fal.subscribe("fal-ai/photomaker", {
+      input: {
+        image_archive_url: zipUrl,
+        prompt,
+        style,
+        base_pipeline: "photomaker-style",
+        negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+        num_inference_steps: 50,
+        style_strength: 20,
+        num_images: 1,
+        guidance_scale: 5,
+      },
+      pollInterval: 1000,
+      logs: true,
+    });
 
-      if (!result || !result.data) {
-        throw new Error('No result data received from API');
-      }
+    return NextResponse.json({ result });
 
-      console.log('API call successful');
-      return NextResponse.json(result.data);
-    } catch (apiError: unknown) {
-      console.error('API Error:', apiError);
-      if (apiError && typeof apiError === 'object' && 'response' in apiError) {
-        try {
-          const errorData = await (apiError.response as Response).json();
-          console.error('API Error Details:', errorData);
-          return NextResponse.json({ 
-            error: 'API Error',
-            details: errorData.message || 'Unknown API error'
-          }, { status: (apiError.response as Response).status });
-        } catch (e) {
-          console.error('Failed to parse API error:', e);
-        }
-      }
-      throw apiError;
-    }
   } catch (error: unknown) {
     console.error('Error details:', error instanceof Error ? error.message : error);
     
