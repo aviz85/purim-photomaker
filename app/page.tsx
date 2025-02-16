@@ -46,12 +46,12 @@ export default function Home() {
       files.map(file => new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
+        reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
         reader.readAsDataURL(file);
       }))
     ).then(
       base64Images => setUploadedImages(base64Images),
-      error => setError('Failed to read image files')
+      err => setError(err instanceof Error ? err.message : 'Failed to read image files')
     );
   }, []);
 
