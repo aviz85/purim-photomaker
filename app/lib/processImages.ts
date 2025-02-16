@@ -11,7 +11,7 @@ interface PhotomakerOutput {
 
 type GenerationResult = Result<PhotomakerOutput>;
 
-type PhotomakerStyle = "(No style)" | "Cinematic" | "Photographic" | "Digital Art" | "Fantasy art" | 
+export type PhotomakerStyle = "(No style)" | "Cinematic" | "Photographic" | "Digital Art" | "Fantasy art" | 
   "Neonpunk" | "Disney Character" | "Enhance" | "Comic book" | "Lowpoly" | "Line art";
 
 const supabase = createClient(
