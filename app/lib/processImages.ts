@@ -80,9 +80,6 @@ export async function processImages(id: string, images: string[], prompt: string
   try {
     console.log(`[${id}] Starting image processing`);
     
-    await updateStatus(id, 'processing', 'Uploading images...');
-    const imageUrls = await uploadImagesToSupabase(images, id);
-    
     await updateStatus(id, 'processing', 'Creating ZIP...');
     const zip = new JSZip();
     
