@@ -39,17 +39,11 @@ export async function POST(request: Request) {
     console.log('First image data length:', images[0].length);
     console.log('First image data prefix:', images[0].substring(0, 50));
 
-    // Create ZIP archive from images
-    console.log('Creating ZIP archive...');
+    // Create and upload ZIP immediately
     const zipBlob = await createZipFromImages(images);
-    
-    // Upload ZIP to fal.ai storage
-    console.log('Uploading ZIP to fal.ai storage...');
     const zipUrl = await fal.storage.upload(zipBlob);
-    console.log('ZIP uploaded:', zipUrl);
 
-    console.log('Attempting API call...');
-
+    // Start the generation but don't wait for it
     const result = await fal.subscribe("fal-ai/photomaker", {
       input: {
         image_archive_url: zipUrl,
@@ -66,6 +60,7 @@ export async function POST(request: Request) {
       logs: true,
     });
 
+    // Return immediately with the queue ID
     return NextResponse.json({ result });
 
   } catch (error: unknown) {
