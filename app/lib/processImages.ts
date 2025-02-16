@@ -84,22 +84,44 @@ async function createZipFromImages(images: string[]): Promise<Blob> {
   }
 }
 
+async function uploadImagesToSupabase(images: string[], jobId: string): Promise<string[]> {
+  const urls = await Promise.all(images.map(async (image, index) => {
+    const base64Data = image.split(',')[1];
+    const fileName = `jobs/${jobId}/image_${index + 1}.jpg`;
+    
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('photomaker')
+      .upload(fileName, Buffer.from(base64Data, 'base64'), {
+        contentType: 'image/jpeg',
+        cacheControl: '3600'
+      });
+
+    if (error) throw error;
+    return data.path;
+  }));
+
+  return urls;
+}
+
 export async function processImages(id: string, images: string[], prompt: string, style: PhotomakerStyle) {
   try {
-    console.log(`[${id}] Starting image processing with ${images.length} images`);
+    console.log(`[${id}] Starting image processing`);
     
-    await updateStatus(id, 'processing', 'Creating ZIP file from images...');
-    const zipBlob = await createZipFromImages(images);
-    console.log(`[${id}] ZIP created, size: ${zipBlob.size} bytes`);
+    // Upload images to Supabase
+    await updateStatus(id, 'processing', 'Uploading images...');
+    const imageUrls = await uploadImagesToSupabase(images, id);
     
-    await updateStatus(id, 'processing', 'Uploading images to fal.ai...');
-    const zipUrl = await fal.storage.upload(zipBlob);
-    console.log(`[${id}] Upload complete, URL: ${zipUrl}`);
+    // Get public URLs
+    const { data: { publicUrl } } = supabase.storage
+      .from('photomaker')
+      .getPublicUrl(imageUrls[0]);
 
-    await updateStatus(id, 'processing', 'Generating image with AI...');
+    // Pass URLs to fal.ai
+    await updateStatus(id, 'processing', 'Generating with AI...');
     const result = await fal.run("fal-ai/photomaker", {
       input: {
-        image_archive_url: zipUrl,
+        image_urls: imageUrls.map(url => supabase.storage.from('photomaker').getPublicUrl(url).data.publicUrl),
         prompt,
         style,
         base_pipeline: "photomaker-style",
@@ -110,7 +132,6 @@ export async function processImages(id: string, images: string[], prompt: string
         guidance_scale: 5,
       }
     });
-    console.log(`[${id}] Generation complete:`, result);
 
     await updateStatus(id, 'completed', 'Image generated successfully!', result);
     console.log(`[${id}] Process completed successfully`);
