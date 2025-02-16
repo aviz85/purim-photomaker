@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
-import { fal } from "@fal-ai/client";
+import { fal, type Result } from "@fal-ai/client";
 import JSZip from 'jszip';
 import { createClient } from '@supabase/supabase-js';
+
+interface PhotomakerOutput {
+  images: Array<{
+    url: string;
+  }>;
+}
 
 type StatusRecord = {
   id: string;
@@ -12,13 +18,7 @@ type StatusRecord = {
   updated_at: string;
 };
 
-type GenerationResult = {
-  images: Array<{
-    url: string;
-    seed: number;
-  }>;
-  // add other known fields
-};
+type GenerationResult = Result<PhotomakerOutput>;
 
 type ErrorResponse = {
   error: string;
