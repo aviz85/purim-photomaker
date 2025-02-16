@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       throw new Error('Invalid style parameter');
     }
     
-    // Create initial status record and return immediately
+    // Create initial status record
     const { data, error: dbError } = await supabase
       .from('generation_status')
       .insert({
@@ -99,15 +99,27 @@ export async function POST(request: Request) {
 
     const id = data.id;
 
-    // Start processing in background
+    // Instead of background processing, start the process and let it run
+    // The client will still get a quick response due to streaming
+    const stream = new TransformStream();
+    const writer = stream.writable.getWriter();
+    const encoder = new TextEncoder();
+
+    // Start processing but don't await it
     processImages(id, images, prompt, style).catch(error => {
-      console.error(`[${id}] Background processing error:`, error);
-      console.error(`[${id}] Error stack:`, error instanceof Error ? error.stack : 'No stack trace');
-      updateStatus(id, 'error', error.message || 'Processing failed');
+      console.error(`[${id}] Processing error:`, error);
     });
 
-    // Return immediately with the status ID
-    return NextResponse.json({ statusId: id }, { status: 201 });
+    // Send immediate response with status ID
+    writer.write(encoder.encode(JSON.stringify({ statusId: id })));
+    writer.close();
+
+    return new Response(stream.readable, {
+      status: 201,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
   } catch (error: unknown) {
     console.error('Error:', error);
