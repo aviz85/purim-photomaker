@@ -61,27 +61,17 @@ export async function processImages(id: string, images: string[], prompt: string
   try {
     console.log(`[${id}] Starting image processing`);
     
-    await updateStatus(id, 'processing', 'Creating ZIP...');
-    const zip = new JSZip();
-    
-    // Add files to zip using base64 directly
-    await Promise.all(images.map(async (image, i) => {
-      console.log(`[${id}] Adding image ${i + 1}`);
-      const base64Data = image.split(',')[1];
-      zip.file(`image_${i + 1}.jpg`, base64Data, {base64: true});
-    }));
-    
-    // Generate zip
-    const zipBlob = await zip.generateAsync({
-      type: 'blob',
-      compression: 'DEFLATE',
-      compressionOptions: { level: 3 }
-    });
-    
-    console.log(`[${id}] Uploading ZIP to fal.ai...`);
-    const zipUrl = await fal.storage.upload(zipBlob);
+    // Get first image's base64 data
+    const base64Data = images[0].split(',')[1];
+    console.log(`[${id}] Processing image...`);
 
     await updateStatus(id, 'processing', 'Generating with AI...');
+    // Create ZIP with single image
+    const zip = new JSZip();
+    zip.file('image.jpg', base64Data, {base64: true});
+    const zipBlob = await zip.generateAsync({type: 'blob'});
+    const zipUrl = await fal.storage.upload(zipBlob);
+
     const falResult = await fal.run("fal-ai/photomaker", {
       input: {
         image_archive_url: zipUrl,
@@ -97,12 +87,7 @@ export async function processImages(id: string, images: string[], prompt: string
     });
 
     console.log(`[${id}] Generation result:`, falResult);
-    console.log(`[${id}] Result data structure:`, {
-      data: falResult.data,
-      requestId: falResult.requestId
-    });
     
-    // Format result according to the PhotomakerOutput type
     const formattedResult: GenerationResult = {
       data: {
         images: falResult.data.images
@@ -113,14 +98,9 @@ export async function processImages(id: string, images: string[], prompt: string
 
     await updateStatus(id, 'completed', 'Image generated successfully!', formattedResult);
     console.log(`[${id}] Process completed successfully`);
-    
-    // Cleanup uploaded images
-    await cleanupStorage(id);
   } catch (error) {
     console.error(`[${id}] Processing error:`, error);
     await updateStatus(id, 'error', error instanceof Error ? error.message : 'Processing failed');
-    // Cleanup on error too
-    await cleanupStorage(id);
     throw error;
   }
 } 
