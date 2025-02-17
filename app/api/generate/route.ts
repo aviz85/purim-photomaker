@@ -21,19 +21,17 @@ export async function POST(request: Request) {
   try {
     const { images, prompt, style } = await request.json();
     
-    // Convert base64 to blob and upload to fal.ai storage
+    // Upload the image directly
     const base64Data = images[0].split(',')[1];
     const imageBlob = new Blob([Buffer.from(base64Data, 'base64')], { type: 'image/jpeg' });
     
-    // Upload image to fal.ai storage
     console.log('Uploading to fal.ai storage...');
     const imageUrl = await falClient.storage.upload(imageBlob);
     console.log('Upload successful, URL:', imageUrl);
 
-    // Use the image URL in the API call
     const result = await falClient.subscribe("fal-ai/photomaker", {
       input: {
-        image_urls: [imageUrl],  // Pass as array of one URL
+        image_archive_url: imageUrl,  // Use the uploaded image URL directly
         prompt,
         style,
         base_pipeline: "photomaker-style",
