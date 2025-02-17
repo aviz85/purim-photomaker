@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import * as fal from "@fal-ai/serverless-client";
+import { fal } from "@fal-ai/client";  // Use client instead of serverless-client
 
 export const runtime = 'edge';
 
@@ -9,7 +9,7 @@ if (!FAL_KEY) {
 }
 
 fal.config({
-  credentials: FAL_KEY  // Pass the full key directly
+  credentials: process.env.FAL_KEY
 });
 
 export async function POST(request: Request) {
@@ -28,21 +28,18 @@ export async function POST(request: Request) {
       input: {
         image_archive_url: imageUrl,
         prompt,
-        style,
-        num_images: 1,
-        base_pipeline: "photomaker-style",
-        guidance_scale: 5,
-        style_strength: 20,
-        negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-        num_inference_steps: 50
-      }
+        style
+      },
+      logs: true,
+      onQueueUpdate: (update) => {
+        if (update.status === "IN_PROGRESS") {
+          update.logs.map((log) => log.message).forEach(console.log);
+        }
+      },
     });
 
-    if (!result || !result.data) {
-      throw new Error('No result data received from API');
-    }
-
-    console.log('API call successful');
+    console.log('Result data:', result.data);
+    console.log('Request ID:', result.requestId);
     return NextResponse.json(result.data);
   } catch (error) {
     console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
