@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fal } from "@fal-ai/serverless-client";
+import * as fal from "@fal-ai/serverless-client";
 
 export const runtime = 'edge';
 
@@ -17,11 +17,10 @@ fal.config({
   },
 });
 
-interface ErrorResponse {
-  message?: string;
-  details?: string;
+type ApiError = Error & {
   status?: number;
-}
+  response?: Response;
+};
 
 export async function POST(request: Request) {
   try {
@@ -55,8 +54,8 @@ export async function POST(request: Request) {
 
     console.log('API call successful');
     return NextResponse.json(result.data);
-  } catch (error: any) {
-    console.error('Error details:', error?.message || error);
+  } catch (error: ApiError) {
+    console.error('Error details:', error.message);
     
     // Handle specific error types
     if (error.message?.includes('Unauthorized')) {
