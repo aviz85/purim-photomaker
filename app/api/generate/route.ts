@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import * as fal from "@fal-ai/serverless-client";
+import { fal } from "@fal-ai/serverless-client";
 
 export const runtime = 'edge';
 
@@ -10,12 +10,18 @@ if (!FAL_KEY) {
 
 // Initialize with credentials
 const [key_id, key_secret] = FAL_KEY.split(':');
-const falClient = fal.init({
+fal.config({
   credentials: {
     key_id,
     key_secret,
   },
 });
+
+interface ErrorResponse {
+  message?: string;
+  details?: string;
+  status?: number;
+}
 
 export async function POST(request: Request) {
   try {
@@ -26,10 +32,10 @@ export async function POST(request: Request) {
     const imageBlob = new Blob([Buffer.from(base64Data, 'base64')], { type: 'image/jpeg' });
     
     console.log('Uploading to fal.ai storage...');
-    const imageUrl = await falClient.storage.upload(imageBlob);
+    const imageUrl = await fal.storage.upload(imageBlob);
     console.log('Upload successful, URL:', imageUrl);
 
-    const result = await falClient.subscribe("fal-ai/photomaker", {
+    const result = await fal.subscribe("fal-ai/photomaker", {
       input: {
         image_archive_url: imageUrl,  // Use the uploaded image URL directly
         prompt,
