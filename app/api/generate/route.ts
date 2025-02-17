@@ -8,13 +8,8 @@ if (!FAL_KEY) {
   throw new Error('FAL_KEY environment variable is not set');
 }
 
-// Initialize with credentials
-const [key_id, key_secret] = FAL_KEY.split(':');
 fal.config({
-  credentials: {
-    key_id,
-    key_secret,
-  },
+  credentials: FAL_KEY  // Pass the full key directly
 });
 
 export async function POST(request: Request) {
@@ -31,16 +26,16 @@ export async function POST(request: Request) {
 
     const result = await fal.subscribe("fal-ai/photomaker", {
       input: {
-        image_archive_url: imageUrl,  // Use the uploaded image URL directly
+        image_archive_url: imageUrl,
         prompt,
         style,
-        base_pipeline: "photomaker-style",
-        negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-        num_inference_steps: 50,
-        style_strength: 20,
         num_images: 1,
+        base_pipeline: "photomaker-style",
         guidance_scale: 5,
-      },
+        style_strength: 20,
+        negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+        num_inference_steps: 50
+      }
     });
 
     if (!result || !result.data) {
