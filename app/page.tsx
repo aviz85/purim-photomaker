@@ -88,7 +88,17 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Error generating image:', error);
-      setError(error instanceof Error ? error.message : 'Failed to generate image');
+      let errorMessage = 'Failed to generate image';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('clear, front-facing photo')) {
+          errorMessage = 'Please upload a clear photo showing the face directly';
+        } else if (error.message.includes('Failed to process')) {
+          errorMessage = 'Could not process this image. Try a different photo with better lighting';
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
