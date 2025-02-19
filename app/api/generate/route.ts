@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { fal } from "@fal-ai/client";  // Use client instead of serverless-client
+import { fal } from "@fal-ai/client";
 import sharp from 'sharp';
 
-export const runtime = 'edge';
-export const maxDuration = 300; // timeout של 5 דקות בשניות
+export const runtime = 'nodejs';
+export const maxDuration = 300;
 
 const FAL_KEY = process.env.FAL_KEY;
 const LOGO_BASE64 = "data:image/png;base64,..."; // הלוגו שלך כ-base64
@@ -21,10 +21,9 @@ async function addLogoToImage(imageUrl: string) {
   const imageResponse = await fetch(imageUrl);
   const imageBuffer = await imageResponse.arrayBuffer();
 
-  // המרת הלוגו מ-base64 לבאפר
-  const logoData = LOGO_BASE64.split(',')[1];
-  const logoBuffer = Buffer.from(logoData, 'base64');
-
+  // טעינת הלוגו מהפרויקט
+  const logoPath = process.cwd() + '/public/images/logo.png';
+  
   // עיבוד התמונה עם sharp
   const image = sharp(Buffer.from(imageBuffer));
   const metadata = await image.metadata();
@@ -37,15 +36,15 @@ async function addLogoToImage(imageUrl: string) {
   const finalImage = await image
     .composite([
       {
-        input: logoBuffer,
+        input: logoPath,
         left: margin,
-        top: metadata.height! - (logoWidth * 0.4) - margin, // שומר על יחס גובה-רוחב של הלוגו
+        top: metadata.height! - (logoWidth * 0.4) - margin,
         width: logoWidth
       }
     ])
     .toBuffer();
 
-  // המרה ל-base64 להחזרה
+  // המרה ל-base64
   return `data:image/png;base64,${finalImage.toString('base64')}`;
 }
 
