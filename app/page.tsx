@@ -1,15 +1,111 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tab } from '@headlessui/react';
 import { COSTUMES } from '../lib/constants';
 import { Costume, GeneratedImage } from '../lib/types';
 import Image from 'next/image';
+import { FaCrown, FaScroll, FaMagic, FaSpinner } from 'react-icons/fa';
+import confetti from 'canvas-confetti';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
 }
+
+const loadingMessages = [
+  // הודעות התחלה
+  ["🎭 ונהפוך הוא - הופכים אותך לדמות מדהימה...",
+   "✨ משנכנס אדר - מתחילים בקסם...",
+   "🎪 פותחים את מגילת התחפושות..."],
+  
+  // הודעות אמצע
+  ["👑 ליהודים הייתה אורה ושמחה - ותחפושת מדהימה!",
+   "🎨 מכינים לך תחפושת שתשמח בה כמו מרדכי ברחוב...",
+   "🎭 מערבבים קצת קסם עם הרבה שמחה..."],
+  
+  // הודעות סיום
+  ["📜 כמעט מוכן, כמו המן שחשב שהוא מוכן...",
+   "🍷 עד דלא ידע - בין ארור המן לברוך מרדכי...",
+   "👑 מלביש אותך בבגדי מלכות, ממש כמו אסתר..."]
+];
+
+const errorMessages = {
+  face: [
+    "אוי ויי! 😅 צריך תמונה ברורה של הפנים, כמו שאסתר הופיעה לפני אחשוורוש",
+    "רגע אחד! 🤔 התמונה לא ברורה כמו המן כשראה את מרדכי על הסוס...",
+    "אופס! 📸 צריך תמונה יותר ברורה, שיראו אותך כמו ושתי במשתה..."
+  ],
+  process: [
+    "רגע, נפלו לנו האוזני המן! 🍪 בוא ננסה שוב...",
+    "המגילה קצת הסתבכה! 📜 ננסה לגלגל מחדש...",
+    "זרעונים של בלבול! 🌱 ננסה שוב, כמו זרש עם העצות שלה..."
+  ],
+  upload: [
+    "אויש! המגילה כבדה מדי 📜 צריך תמונה קטנה יותר",
+    "התמונה גדולה יותר מארמון המלך! 🏰 צריך לכווץ אותה",
+    "וואו, זה יותר גדול מ-127 המדינות של אחשוורוש! 🌍 בוא נקטין..."
+  ],
+  general: [
+    "משהו השתבש בממלכה... 👑 אולי כדאי לשלוח את מרדכי היהודי לבדוק?",
+    "נראה שהמן שוב מתכנן משהו... 😅 בוא ננסה שוב!",
+    "אוי, התרחש נס - אבל לא הנס שציפינו לו! 🎲 ננסה שוב..."
+  ]
+};
+
+function RandomMessage({ messages, interval }: { messages: string[][], interval: number }) {
+  const [phase, setPhase] = useState(0);
+  const [messageIndex, setMessageIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPhase((prev) => {
+        if (prev >= messages.length - 1) {
+          setMessageIndex(Math.floor(Math.random() * messages[0].length));
+          return 0;
+        }
+        return prev + 1;
+      });
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [interval, messages]);
+
+  return (
+    <motion.p
+      key={`${phase}-${messageIndex}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="text-lg text-purple-800"
+    >
+      {messages[phase][messageIndex]}
+    </motion.p>
+  );
+}
+
+// הוספת אנימציות לאימוג'ים
+const floatingEmoji = {
+  animate: {
+    y: [0, -10, 0],
+    transition: {
+      duration: 2,
+      repeat: Infinity,
+      ease: "easeInOut"
+    }
+  }
+};
+
+const spinningEmoji = {
+  animate: {
+    rotate: 360,
+    transition: {
+      duration: 4,
+      repeat: Infinity,
+      ease: "linear"
+    }
+  }
+};
 
 export default function Home() {
   const [selectedGender, setSelectedGender] = useState<'boy' | 'girl'>('boy');
@@ -114,62 +210,87 @@ export default function Home() {
   console.log('All Costumes:', COSTUMES);
   console.log('Filtered Costumes:', filteredCostumes);
 
+  const getRandomError = (type: keyof typeof errorMessages) => {
+    const messages = errorMessages[type];
+    return messages[Math.floor(Math.random() * messages.length)];
+  };
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-purple-100 to-pink-100 py-12 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-purple-800 mb-4">יוצר תמונות פורים קסום</h1>
-          <p className="text-lg text-purple-600">העלו תמונה של הילד/ה ובחרו תחפושת קסומה!</p>
+        <div className="text-center mb-12 relative">
+          {/* אימוג'ים מרחפים */}
+          <motion.span 
+            variants={floatingEmoji}
+            animate="animate"
+            className="absolute -left-8 -top-4 text-4xl"
+          >
+            🎭
+          </motion.span>
+          <motion.span 
+            variants={spinningEmoji}
+            animate="animate"
+            className="absolute -right-8 -top-4 text-4xl"
+          >
+            👑
+          </motion.span>
+          
+          <h1 className="text-5xl font-bold text-purple-800 mb-6 tracking-wide">
+            ✨ יוצר תחפושות פורים קסום ✨
+          </h1>
+          <p className="text-xl text-purple-600 font-medium">
+            🎪 ונהפוך הוא - העלו תמונה והפכו אותה לתחפושת מדהימה! 🎪
+          </p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
+        <div className="bg-white rounded-[2rem] shadow-2xl p-8 mb-8 transform hover:scale-[1.02] transition-all duration-300">
           <Tab.Group selectedIndex={selectedGender === 'boy' ? 0 : 1} onChange={handleTabChange}>
-            <Tab.List className="flex space-x-4 rtl:space-x-reverse mb-6">
+            <Tab.List className="flex space-x-4 rtl:space-x-reverse mb-8">
               <Tab
                 className={({ selected }) =>
                   classNames(
-                    'w-full py-2.5 text-lg font-medium leading-5 rounded-lg',
-                    'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-purple-400 ring-white ring-opacity-60',
+                    'w-full py-3 text-xl font-medium leading-5 rounded-full transition-all duration-300',
+                    'focus:outline-none focus:ring-4 ring-offset-2 ring-offset-purple-400 ring-white ring-opacity-60',
                     selected
-                      ? 'bg-purple-600 text-white shadow'
-                      : 'text-purple-600 hover:bg-purple-100'
+                      ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white shadow-lg transform scale-105'
+                      : 'text-purple-600 hover:bg-purple-100 hover:scale-102'
                   )
                 }
               >
-                בנים
+                �� בנים
               </Tab>
               <Tab
                 className={({ selected }) =>
                   classNames(
-                    'w-full py-2.5 text-lg font-medium leading-5 rounded-lg',
-                    'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-purple-400 ring-white ring-opacity-60',
+                    'w-full py-3 text-xl font-medium leading-5 rounded-full transition-all duration-300',
+                    'focus:outline-none focus:ring-4 ring-offset-2 ring-offset-pink-400 ring-white ring-opacity-60',
                     selected
-                      ? 'bg-pink-600 text-white shadow'
-                      : 'text-pink-600 hover:bg-pink-100'
+                      ? 'bg-gradient-to-r from-pink-500 to-pink-700 text-white shadow-lg transform scale-105'
+                      : 'text-pink-600 hover:bg-pink-100 hover:scale-102'
                   )
                 }
               >
-                בנות
+                👧 בנות
               </Tab>
             </Tab.List>
 
             <Tab.Panels>
-              <Tab.Panel static className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Tab.Panel static className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredCostumes.map((costume) => (
                   <motion.div
                     key={costume.id}
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.05, rotate: 1 }}
                     whileTap={{ scale: 0.95 }}
                     className={classNames(
-                      'cursor-pointer p-4 rounded-lg',
+                      'cursor-pointer p-6 rounded-[1.5rem] transition-all duration-300',
                       selectedCostume?.id === costume.id
-                        ? 'bg-purple-100 border-2 border-purple-500'
-                        : 'bg-gray-50 hover:bg-purple-50'
+                        ? 'bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-500 shadow-lg'
+                        : 'bg-gray-50 hover:bg-purple-50 hover:shadow-xl'
                     )}
                     onClick={() => setSelectedCostume(costume)}
                   >
-                    <h3 className="text-lg font-medium text-purple-800 mb-2">{costume.name}</h3>
-                    <p className="text-sm text-purple-600">{costume.description}</p>
+                    <h3 className="text-xl font-bold text-purple-800 mb-3">{costume.name}</h3>
+                    <p className="text-md text-purple-600">{costume.description}</p>
                   </motion.div>
                 ))}
               </Tab.Panel>
@@ -177,48 +298,41 @@ export default function Home() {
           </Tab.Group>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
+        <div className="bg-white rounded-[2rem] shadow-2xl p-8 mb-8">
           <div className="flex flex-col items-center">
-            <div className="mb-6 text-center">
-              <h3 className="text-lg font-medium text-purple-800 mb-2">הנחיות לתמונה:</h3>
-              <ul className="text-sm text-purple-600 space-y-1 text-right">
-                <li>• התמונה צריכה להיות ברורה ולהראות את הפנים</li>
-                <li>• רצוי תמונה חזיתית (פרונטלית)</li>
-                <li>• הפנים צריכות להיות מוארות היטב</li>
-                <li>• גודל מקסימלי: 5MB</li>
+            <motion.div 
+              className="mb-6 text-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <h3 className="text-2xl font-bold text-purple-800 mb-4">✨ הנחיות לתמונה ✨</h3>
+              <ul className="text-lg text-purple-600 space-y-2 text-right">
+                <li>📸 התמונה צריכה להיות ברורה ולהראות את הפנים</li>
+                <li>👀 רצוי תמונה חזיתית (פרונטלית)</li>
+                <li>💡 הפנים צריכות להיות מוארות היטב</li>
+                <li>📦 גודל מקסימלי: 5MB</li>
               </ul>
-            </div>
-            <label className="w-full max-w-md flex flex-col items-center px-4 py-6 bg-purple-50 text-purple rounded-lg shadow-lg tracking-wide border border-purple-200 cursor-pointer hover:bg-purple-100">
-              <svg className="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.74-.12 1.1zM11 11h3l-4-4-4 4h3v3h2v-3z" />
-              </svg>
-              <span className="mt-2 text-base leading-normal">העלו תמונה</span>
+            </motion.div>
+            
+            <label className="w-full max-w-md flex flex-col items-center px-6 py-8 bg-gradient-to-br from-purple-50 to-pink-50 text-purple rounded-[1.5rem] shadow-xl tracking-wide border-2 border-purple-200 cursor-pointer hover:border-purple-400 hover:shadow-2xl transition-all duration-300">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="text-5xl mb-4"
+              >
+                ✨
+              </motion.div>
+              <span className="text-xl font-medium text-purple-700">העלו תמונה קסומה!</span>
               <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
             </label>
-
-            {uploadedImage && (
-              <div className="mt-4 relative w-32 h-32">
-                <Image
-                  src={uploadedImage}
-                  alt="Uploaded image"
-                  fill
-                  className="object-cover rounded-lg"
-                />
-                <button
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                  onClick={() => setUploadedImage(null)}
-                >
-                  ×
-                </button>
-              </div>
-            )}
           </div>
         </div>
 
         <div className="text-center">
           {error && (
             <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
-              {error}
+              <p className="text-xl mb-2">🤔</p>
+              {getRandomError(error as keyof typeof errorMessages)}
             </div>
           )}
           <button
@@ -236,6 +350,28 @@ export default function Home() {
           </button>
         </div>
 
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          >
+            <div className="bg-white p-8 rounded-xl text-center">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="text-4xl mb-4"
+              >
+                🎭
+              </motion.div>
+              <RandomMessage messages={loadingMessages} interval={2000} />
+              <p className="text-sm text-purple-600 mt-2">
+                (זה יכול לקחת כדקה, בדיוק כמו שמרדכי חיכה בשער המלך...)
+              </p>
+            </div>
+          </motion.div>
+        )}
+
         <AnimatePresence>
           {generatedImage && (
             <motion.div
@@ -244,7 +380,9 @@ export default function Home() {
               exit={{ opacity: 0, y: 20 }}
               className="mt-8 bg-white rounded-2xl shadow-xl p-6"
             >
-              <h2 className="text-2xl font-bold text-purple-800 mb-4 text-center">התמונה המוכנה!</h2>
+              <h2 className="text-2xl font-bold text-purple-800 mb-4 text-center">
+                🎉 ליהודים הייתה אורה ושמחה - והתחפושת מוכנה! 🎉
+              </h2>
               <div className="relative w-full aspect-square max-w-2xl mx-auto">
                 <Image
                   src={generatedImage.url}
