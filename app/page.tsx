@@ -53,6 +53,18 @@ const errorMessages = {
   ]
 };
 
+const retryMessages = [
+  "אוי, נראה שהמן תפס את השרת! 😅 אולי ננסה שוב בעוד דקה כשמרדכי יטפל בו?",
+  "רגע, ושתי תפסה את המחשב! 👑 בואו נחכה דקה שאחשוורוש ימצא מחליפה...",
+  "אופס! המן בנה עץ על השרת! 🌳 נחכה דקה שיפילו אותו...",
+  "אוי ויי, התחפושת נתקעה בארמון! 🏰 ננסה שוב בעוד דקה כשאסתר תשחרר אותה...",
+  "נראה שהשרת שיכור מיין המלך! 🍷 נחכה דקה שיתפכח...",
+  "זרש תפסה את הרשת! 🕸️ נחכה דקה שמרדכי יעבור ברחוב...",
+  "התרנגול של גבר חרבונה מפריע לשרת! 🐓 ננסה שוב בעוד דקה...",
+  "השרת בתענית אסתר! ⏳ נחכה דקה ונשבור את הצום...",
+  "חתול של בגתן ותרש חוסם את השרת! 🐱 נחכה דקה שמרדכי יגלה את הקשר..."
+];
+
 function RandomMessage({ messages, interval }: { messages: string[][], interval: number }) {
   const [phase, setPhase] = useState(0);
   const [messageIndex, setMessageIndex] = useState(0);
@@ -184,13 +196,16 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Error generating image:', error);
-      let errorMessage = 'Failed to generate image';
+      let errorMessage = getRandomError('general');
       
       if (error instanceof Error) {
         if (error.message.includes('clear, front-facing photo')) {
-          errorMessage = 'Please upload a clear photo showing the face directly';
+          errorMessage = getRandomError('face');
         } else if (error.message.includes('Failed to process')) {
-          errorMessage = 'Could not process this image. Try a different photo with better lighting';
+          errorMessage = getRandomError('process');
+        } else if (error.message.includes('rate limit') || error.message.includes('timeout')) {
+          // בחירה אקראית מהודעות הניסיון מחדש
+          errorMessage = retryMessages[Math.floor(Math.random() * retryMessages.length)];
         }
       }
       
@@ -257,7 +272,7 @@ export default function Home() {
                   )
                 }
               >
-                �� בנים
+                בנים
               </Tab>
               <Tab
                 className={({ selected }) =>
@@ -332,7 +347,7 @@ export default function Home() {
           {error && (
             <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
               <p className="text-xl mb-2">🤔</p>
-              {getRandomError(error as keyof typeof errorMessages)}
+              {error}
             </div>
           )}
           <button
