@@ -465,6 +465,15 @@ export default function Home() {
                   fill
                   className="object-contain rounded-lg"
                 />
+                <div className="absolute left-4 bottom-4 w-24 h-auto z-10">
+                  <Image
+                    src="https://otiyotveyeladim.co.il/wp-content/uploads/2022/12/otiotLogo.svg"
+                    alt="אותיות וילדים"
+                    width={96}
+                    height={40}
+                    className="w-full h-auto"
+                  />
+                </div>
               </div>
               <div className="mt-4 text-center">
                 <a
