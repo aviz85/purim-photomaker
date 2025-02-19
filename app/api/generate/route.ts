@@ -6,7 +6,6 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const FAL_KEY = process.env.FAL_KEY;
-const LOGO_BASE64 = "data:image/png;base64,..."; // הלוגו שלך כ-base64
 
 if (!FAL_KEY) {
   throw new Error('FAL_KEY environment variable is not set');
@@ -36,10 +35,12 @@ async function addLogoToImage(imageUrl: string) {
   const finalImage = await image
     .composite([
       {
-        input: logoPath,
+        input: await sharp(logoPath)
+          .resize(logoWidth)
+          .toBuffer(),
+        gravity: 'southwest',
         left: margin,
-        top: metadata.height! - (logoWidth * 0.4) - margin,
-        width: logoWidth
+        top: margin
       }
     ])
     .toBuffer();
