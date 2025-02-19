@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { fal } from "@fal-ai/client";  // Use client instead of serverless-client
 
 export const runtime = 'edge';
+export const maxDuration = 300; // timeout של 5 דקות בשניות
 
 const FAL_KEY = process.env.FAL_KEY;
 if (!FAL_KEY) {
