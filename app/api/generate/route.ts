@@ -43,6 +43,8 @@ export async function POST(request: Request) {
             update.logs.map((log) => log.message).forEach(console.log);
           }
         },
+        timeout: 300000, // 5 דקות
+        retries: 3,     // מספר ניסיונות חוזרים
       });
 
       console.log('Result data:', result.data);

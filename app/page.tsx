@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tab } from '@headlessui/react';
 import { COSTUMES } from '../lib/constants';
@@ -126,6 +126,7 @@ export default function Home() {
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -197,6 +198,14 @@ export default function Home() {
           shapes: ['circle', 'square'],
           origin: { y: 0.6 }
         });
+        
+        // גלילה חלקה לתמונה
+        setTimeout(() => {
+          resultRef.current?.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }, 100);
       } else {
         console.error('Unexpected response format:', data);
         throw new Error('No image was generated');
@@ -417,6 +426,7 @@ export default function Home() {
         <AnimatePresence>
           {generatedImage && (
             <motion.div
+              ref={resultRef}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
