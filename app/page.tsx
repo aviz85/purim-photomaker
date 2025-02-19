@@ -246,6 +246,66 @@ export default function Home() {
     return messages[Math.floor(Math.random() * messages.length)];
   };
 
+  // נוסיף פונקציה להורדת התמונה עם הלוגו
+  const handleDownload = async () => {
+    if (!generatedImage?.url) return;
+
+    try {
+      // יצירת קנבס
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // טעינת התמונה המקורית
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = generatedImage.url;
+      });
+
+      // הגדרת גודל הקנבס
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      // ציור התמונה המקורית
+      ctx.drawImage(img, 0, 0);
+
+      // טעינת הלוגו
+      const logo = new Image();
+      logo.crossOrigin = "anonymous";
+      await new Promise((resolve, reject) => {
+        logo.onload = resolve;
+        logo.onerror = reject;
+        logo.src = "https://otiyotveyeladim.co.il/wp-content/uploads/2022/12/otiotLogo.svg";
+      });
+
+      // חישוב גודל הלוגו (10% מרוחב התמונה)
+      const logoWidth = img.width * 0.1;
+      const logoHeight = (logo.height / logo.width) * logoWidth;
+      
+      // ציור הלוגו בפינה השמאלית התחתונה עם מרווח
+      const margin = img.width * 0.02; // 2% מרווח
+      ctx.drawImage(
+        logo,
+        margin,
+        img.height - logoHeight - margin,
+        logoWidth,
+        logoHeight
+      );
+
+      // המרה ל-URL והורדה
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = 'purim-costume.png';
+      link.click();
+    } catch (error) {
+      console.error('Error downloading image:', error);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
@@ -476,13 +536,12 @@ export default function Home() {
                 </div>
               </div>
               <div className="mt-4 text-center">
-                <a
-                  href={generatedImage.url}
-                  download="purim-costume.png"
+                <button
+                  onClick={handleDownload}
                   className="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                 >
                   הורד תמונה
-                </a>
+                </button>
               </div>
             </motion.div>
           )}
