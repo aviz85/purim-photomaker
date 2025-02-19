@@ -257,11 +257,11 @@ export default function Home() {
       if (!ctx) return;
 
       // טעינת התמונה המקורית
-      const img = new Image();
+      const img = new window.Image();
       img.crossOrigin = "anonymous";
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('Failed to load image'));
         img.src = generatedImage.url;
       });
 
@@ -273,11 +273,11 @@ export default function Home() {
       ctx.drawImage(img, 0, 0);
 
       // טעינת הלוגו
-      const logo = new Image();
+      const logo = new window.Image();
       logo.crossOrigin = "anonymous";
-      await new Promise((resolve, reject) => {
-        logo.onload = resolve;
-        logo.onerror = reject;
+      await new Promise<void>((resolve, reject) => {
+        logo.onload = () => resolve();
+        logo.onerror = () => reject(new Error('Failed to load logo'));
         logo.src = "https://otiyotveyeladim.co.il/wp-content/uploads/2022/12/otiotLogo.svg";
       });
 
