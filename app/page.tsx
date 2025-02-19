@@ -246,7 +246,7 @@ export default function Home() {
     return messages[Math.floor(Math.random() * messages.length)];
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!generatedImage?.url) return;
     
     try {
@@ -267,20 +267,28 @@ export default function Home() {
       }
       
       const blob = new Blob(byteArrays, { type: 'image/png' });
-      const url = window.URL.createObjectURL(blob);
-      
-      // יצירת לינק והורדה
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'purim-costume.png';
-      document.body.appendChild(link);
-      link.click();
-      
-      // ניקוי
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+
+      // בדיקה אם Web Share API זמין
+      if (navigator.share && /mobile|tablet|android/i.test(navigator.userAgent)) {
+        const file = new File([blob], 'purim-costume.png', { type: 'image/png' });
+        await navigator.share({
+          title: 'התחפושת שלי לפורים!',
+          text: 'תראו איזו תחפושת מגניבה יצרתי באתר אותיות וילדים!',
+          files: [file]
+        });
+      } else {
+        // אם לא במובייל, נשתמש בהורדה רגילה
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'purim-costume.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
     } catch (error) {
-      console.error('Error downloading image:', error);
+      console.error('Error sharing/downloading image:', error);
     }
   };
 
@@ -510,9 +518,23 @@ export default function Home() {
               <div className="mt-4 text-center">
                 <button
                   onClick={handleDownload}
-                  className="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  className="inline-flex items-center gap-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                 >
-                  הורד תמונה
+                  {/mobile|tablet|android/i.test(navigator.userAgent) ? (
+                    <>
+                      שתף תמונה
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+                      </svg>
+                    </>
+                  ) : (
+                    <>
+                      הורד תמונה
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                      </svg>
+                    </>
+                  )}
                 </button>
               </div>
             </motion.div>
