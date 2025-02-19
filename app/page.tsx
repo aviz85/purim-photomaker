@@ -191,8 +191,10 @@ export default function Home() {
       if (data.images?.[0]?.url) {
         setGeneratedImage(data.images[0]);
         confetti({
-          particleCount: 100,
-          spread: 70,
+          particleCount: 150,
+          spread: 100,
+          colors: ['#9333ea', '#ec4899', '#fcd34d'],
+          shapes: ['circle', 'square'],
           origin: { y: 0.6 }
         });
       } else {
