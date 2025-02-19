@@ -6,7 +6,6 @@ import { Tab } from '@headlessui/react';
 import { COSTUMES } from '../lib/constants';
 import { Costume, GeneratedImage } from '../lib/types';
 import Image from 'next/image';
-import { FaCrown, FaScroll, FaMagic, FaSpinner } from 'react-icons/fa';
 import confetti from 'canvas-confetti';
 
 function classNames(...classes: string[]) {
