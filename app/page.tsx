@@ -273,7 +273,7 @@ export default function Home() {
         const file = new File([blob], 'purim-costume.png', { type: 'image/png' });
         await navigator.share({
           title: 'התחפושת שלי לפורים!',
-          text: 'תראו איזו תחפושת מגניבה יצרתי באתר אותיות וילדים!',
+          text: 'תראו איזו תחפושת מגניבה יצרתי באתר של \'אותיות וילדים\'!\n\nרוצו לנסות: https://rb.gy/sxql8q',
           files: [file]
         });
       } else {
