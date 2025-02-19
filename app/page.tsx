@@ -285,153 +285,156 @@ export default function Home() {
         </div>
 
         <div className="space-y-12">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-purple-800 mb-4">איך זה עובד?</h2>
-            <div className="flex flex-col md:flex-row justify-center gap-6 text-lg">
-              <div className="bg-white p-6 rounded-2xl shadow-lg flex-1 max-w-sm">
-                <div className="text-3xl mb-2">1️⃣</div>
-                <h3 className="font-bold text-purple-700 mb-2">בחרו תחפושת</h3>
-                <p className="text-purple-600">בחרו את התחפושת המושלמת מהאפשרויות שלנו</p>
-              </div>
-              <div className="bg-white p-6 rounded-2xl shadow-lg flex-1 max-w-sm">
-                <div className="text-3xl mb-2">2️⃣</div>
-                <h3 className="font-bold text-purple-700 mb-2">העלו תמונה</h3>
-                <p className="text-purple-600">העלו תמונה ברורה של הפנים מהמחשב או הטלפון</p>
-              </div>
-              <div className="bg-white p-6 rounded-2xl shadow-lg flex-1 max-w-sm">
-                <div className="text-3xl mb-2">3️⃣</div>
-                <h3 className="font-bold text-purple-700 mb-2">צרו קסם</h3>
-                <p className="text-purple-600">לחצו על הכפתור וחכו לקסם לקרות!</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-[2rem] shadow-2xl p-8 mb-8 transform hover:scale-[1.02] transition-all duration-300">
-          <Tab.Group selectedIndex={selectedGender === 'boy' ? 0 : 1} onChange={handleTabChange}>
-            <Tab.List className="flex space-x-4 rtl:space-x-reverse mb-8">
-              <Tab
-                className={({ selected }) =>
-                  classNames(
-                    'w-full py-3 text-xl font-medium leading-5 rounded-full transition-all duration-300',
-                    'focus:outline-none focus:ring-4 ring-offset-2 ring-offset-purple-400 ring-white ring-opacity-60',
-                    selected
-                      ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white shadow-lg transform scale-105'
-                      : 'text-purple-600 hover:bg-purple-100 hover:scale-102'
-                  )
-                }
-              >
-                בנים
-              </Tab>
-              <Tab
-                className={({ selected }) =>
-                  classNames(
-                    'w-full py-3 text-xl font-medium leading-5 rounded-full transition-all duration-300',
-                    'focus:outline-none focus:ring-4 ring-offset-2 ring-offset-pink-400 ring-white ring-opacity-60',
-                    selected
-                      ? 'bg-gradient-to-r from-pink-500 to-pink-700 text-white shadow-lg transform scale-105'
-                      : 'text-pink-600 hover:bg-pink-100 hover:scale-102'
-                  )
-                }
-              >
-                👧 בנות
-              </Tab>
-            </Tab.List>
-
-            <Tab.Panels>
-              <Tab.Panel static className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredCostumes.map((costume) => (
-                  <motion.div
-                    key={costume.id}
-                    whileHover={{ scale: 1.05, rotate: 1 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={classNames(
-                      'cursor-pointer p-6 rounded-[1.5rem] transition-all duration-300',
-                      selectedCostume?.id === costume.id
-                        ? 'bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-500 shadow-lg'
-                        : 'bg-gray-50 hover:bg-purple-50 hover:shadow-xl'
-                    )}
-                    onClick={() => setSelectedCostume(costume)}
-                  >
-                    <h3 className="text-xl font-bold text-purple-800 mb-3">{costume.name}</h3>
-                    <p className="text-md text-purple-600">{costume.description}</p>
-                  </motion.div>
-                ))}
-              </Tab.Panel>
-            </Tab.Panels>
-          </Tab.Group>
-        </div>
-
-        <div className="bg-white rounded-[2rem] shadow-2xl p-8 mb-8">
-          <div className="flex flex-col items-center">
-            <motion.div 
-              className="mb-6 text-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <h3 className="text-2xl font-bold text-purple-800 mb-4">✨ הנחיות לתמונה ✨</h3>
-              <ul className="text-lg text-purple-600 space-y-2 text-right">
-                <li>📸 התמונה צריכה להיות ברורה ולהראות את הפנים</li>
-                <li>👀 רצוי תמונה חזיתית (פרונטלית)</li>
-                <li>הפנים צריכות להיות מוארות היטב</li>
-                <li>📦 גודל מקסימלי: 5MB</li>
-              </ul>
-            </motion.div>
+          {/* שלב א - בחירת תחפושת */}
+          <div className="bg-white rounded-[2rem] shadow-2xl p-8">
+            <h2 className="text-3xl font-bold text-purple-800 mb-6 text-center">
+              <span className="text-4xl">🎭</span> שלב א׳: בחרו תחפושת
+            </h2>
+            <p className="text-lg text-purple-600 mb-8 text-center">
+              בחרו את התחפושת המושלמת מהאפשרויות שלנו
+            </p>
             
-            <label className="w-full max-w-md flex flex-col items-center px-6 py-8 bg-gradient-to-br from-purple-50 to-pink-50 text-purple rounded-[1.5rem] shadow-xl tracking-wide border-2 border-purple-200 cursor-pointer hover:border-purple-400 hover:shadow-2xl transition-all duration-300">
-              {uploadedImage ? (
-                <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-4">
-                  <Image
-                    src={uploadedImage}
-                    alt="Uploaded photo"
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-                    <p className="text-white text-lg font-medium">
-                      לחץ להחלפת תמונה 🔄
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="text-5xl mb-4 text-purple-500">
-                    📸
-                  </div>
-                  <span className="text-xl font-medium text-purple-700">העלו תמונה!</span>
-                  <span className="text-sm text-purple-500 mt-2">לחצו כאן או גררו תמונה</span>
-                </>
-              )}
-              <input 
-                type="file" 
-                className="hidden" 
-                accept="image/*" 
-                onChange={handleImageUpload} 
-              />
-            </label>
-          </div>
-        </div>
+            <Tab.Group selectedIndex={selectedGender === 'boy' ? 0 : 1} onChange={handleTabChange}>
+              <Tab.List className="flex space-x-4 rtl:space-x-reverse mb-8">
+                <Tab
+                  className={({ selected }) =>
+                    classNames(
+                      'w-full py-3 text-xl font-medium leading-5 rounded-full transition-all duration-300',
+                      'focus:outline-none focus:ring-4 ring-offset-2 ring-offset-purple-400 ring-white ring-opacity-60',
+                      selected
+                        ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white shadow-lg transform scale-105'
+                        : 'text-purple-600 hover:bg-purple-100 hover:scale-102'
+                    )
+                  }
+                >
+                  בנים
+                </Tab>
+                <Tab
+                  className={({ selected }) =>
+                    classNames(
+                      'w-full py-3 text-xl font-medium leading-5 rounded-full transition-all duration-300',
+                      'focus:outline-none focus:ring-4 ring-offset-2 ring-offset-pink-400 ring-white ring-opacity-60',
+                      selected
+                        ? 'bg-gradient-to-r from-pink-500 to-pink-700 text-white shadow-lg transform scale-105'
+                        : 'text-pink-600 hover:bg-pink-100 hover:scale-102'
+                    )
+                  }
+                >
+                  👧 בנות
+                </Tab>
+              </Tab.List>
 
-        <div className="text-center">
-          {error && (
-            <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
-              <p className="text-xl mb-2">🤔</p>
-              {error}
+              <Tab.Panels>
+                <Tab.Panel static className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredCostumes.map((costume) => (
+                    <motion.div
+                      key={costume.id}
+                      whileHover={{ scale: 1.05, rotate: 1 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={classNames(
+                        'cursor-pointer p-6 rounded-[1.5rem] transition-all duration-300',
+                        selectedCostume?.id === costume.id
+                          ? 'bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-500 shadow-lg'
+                          : 'bg-gray-50 hover:bg-purple-50 hover:shadow-xl'
+                      )}
+                      onClick={() => setSelectedCostume(costume)}
+                    >
+                      <h3 className="text-xl font-bold text-purple-800 mb-3">{costume.name}</h3>
+                      <p className="text-md text-purple-600">{costume.description}</p>
+                    </motion.div>
+                  ))}
+                </Tab.Panel>
+              </Tab.Panels>
+            </Tab.Group>
+          </div>
+
+          {/* שלב ב - העלאת תמונה */}
+          <div className="bg-white rounded-[2rem] shadow-2xl p-8">
+            <h2 className="text-3xl font-bold text-purple-800 mb-6 text-center">
+              <span className="text-4xl">📸</span> שלב ב׳: העלו תמונה
+            </h2>
+            <p className="text-lg text-purple-600 mb-8 text-center">
+              העלו תמונה ברורה של הפנים. התמונה צריכה להיות חזיתית עם תאורה טובה.
+            </p>
+
+            <div className="flex flex-col items-center">
+              <motion.div 
+                className="mb-6 text-center"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <ul className="text-lg text-purple-600 space-y-2 text-right">
+                  <li>👀 רצוי תמונה חזיתית (פרונטלית)</li>
+                  <li>💡 הפנים צריכות להיות מוארות היטב</li>
+                  <li>📦 גודל מקסימלי: 5MB</li>
+                </ul>
+              </motion.div>
+              
+              <label className="w-full max-w-md flex flex-col items-center px-6 py-8 bg-gradient-to-br from-purple-50 to-pink-50 text-purple rounded-[1.5rem] shadow-xl tracking-wide border-2 border-purple-200 cursor-pointer hover:border-purple-400 hover:shadow-2xl transition-all duration-300">
+                {uploadedImage ? (
+                  <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-4">
+                    <Image
+                      src={uploadedImage}
+                      alt="Uploaded photo"
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                      <p className="text-white text-lg font-medium">
+                        לחץ להחלפת תמונה 🔄
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-5xl mb-4 text-purple-500">
+                      📸
+                    </div>
+                    <span className="text-xl font-medium text-purple-700">העלו תמונה!</span>
+                    <span className="text-sm text-purple-500 mt-2">לחצו כאן או גררו תמונה</span>
+                  </>
+                )}
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleImageUpload} 
+                />
+              </label>
             </div>
-          )}
-          <button
-            className={classNames(
-              'px-8 py-3 rounded-lg text-lg font-medium',
-              'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-purple-400',
-              isLoading || !selectedCostume || !uploadedImage
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-purple-600 text-white hover:bg-purple-700'
-            )}
-            onClick={handleGenerate}
-            disabled={isLoading || !selectedCostume || !uploadedImage}
-          >
-            {isLoading ? 'יוצר תמונה...' : 'צור תמונה קסומה!'}
-          </button>
+          </div>
+
+          {/* שלב ג - יצירת התמונה */}
+          <div className="bg-white rounded-[2rem] shadow-2xl p-8">
+            <h2 className="text-3xl font-bold text-purple-800 mb-6 text-center">
+              <span className="text-4xl">✨</span> שלב ג׳: צרו את התחפושת הקסומה
+            </h2>
+            <p className="text-lg text-purple-600 mb-8 text-center">
+              לחצו על הכפתור ותנו לקסם לקרות! התהליך יכול לקחת כדקה.
+            </p>
+
+            <div className="text-center">
+              {error && (
+                <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+                  <p className="text-xl mb-2">🤔</p>
+                  {error}
+                </div>
+              )}
+              <button
+                className={classNames(
+                  'px-8 py-3 rounded-lg text-lg font-medium',
+                  'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-purple-400',
+                  isLoading || !selectedCostume || !uploadedImage
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-purple-600 text-white hover:bg-purple-700'
+                )}
+                onClick={handleGenerate}
+                disabled={isLoading || !selectedCostume || !uploadedImage}
+              >
+                {isLoading ? 'יוצר תמונה...' : 'צור תמונה קסומה!'}
+              </button>
+            </div>
+          </div>
         </div>
 
         {isLoading && (
