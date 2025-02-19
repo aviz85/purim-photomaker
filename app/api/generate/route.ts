@@ -27,8 +27,8 @@ async function addLogoToImage(imageUrl: string) {
   const image = sharp(Buffer.from(imageBuffer));
   const metadata = await image.metadata();
   
-  // חישוב גודל הלוגו (10% מרוחב התמונה)
-  const logoWidth = Math.round(metadata.width! * 0.1);
+  // חישוב גודל הלוגו (30% מרוחב התמונה במקום 10%)
+  const logoWidth = Math.round(metadata.width! * 0.3);
   const margin = Math.round(metadata.width! * 0.02);
 
   // הוספת הלוגו
@@ -38,7 +38,7 @@ async function addLogoToImage(imageUrl: string) {
         input: await sharp(logoPath)
           .resize(logoWidth)
           .toBuffer(),
-        gravity: 'southwest',
+        gravity: 'southeast',
         left: margin,
         top: margin
       }
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
           guidance_scale: 5,
           style_strength: 20,
           negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-          num_inference_steps: 50
+          num_inference_steps: 20
         },
         logs: true,
         onQueueUpdate: (update) => {
