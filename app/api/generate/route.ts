@@ -28,7 +28,13 @@ export async function POST(request: Request) {
       input: {
         image_archive_url: imageUrl,
         prompt,
-        style
+        style: "Disney Character",
+        base_pipeline: "photomaker-style",
+        num_images: 1,
+        guidance_scale: 5,
+        style_strength: 20,
+        negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+        num_inference_steps: 50
       },
       logs: true,
       onQueueUpdate: (update) => {
