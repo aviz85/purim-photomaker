@@ -246,14 +246,42 @@ export default function Home() {
     return messages[Math.floor(Math.random() * messages.length)];
   };
 
-  // החלפת פונקציית ההורדה לפשוטה יותר
   const handleDownload = () => {
     if (!generatedImage?.url) return;
     
-    const link = document.createElement('a');
-    link.href = generatedImage.url;
-    link.download = 'purim-costume.png';
-    link.click();
+    try {
+      // המרת base64 ל-blob
+      const base64Data = generatedImage.url.split(',')[1];
+      const byteCharacters = atob(base64Data);
+      const byteArrays = [];
+      
+      for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+        const slice = byteCharacters.slice(offset, offset + 512);
+        const byteNumbers = new Array(slice.length);
+        
+        for (let i = 0; i < slice.length; i++) {
+          byteNumbers[i] = slice.charCodeAt(i);
+        }
+        
+        byteArrays.push(new Uint8Array(byteNumbers));
+      }
+      
+      const blob = new Blob(byteArrays, { type: 'image/png' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // יצירת לינק והורדה
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'purim-costume.png';
+      document.body.appendChild(link);
+      link.click();
+      
+      // ניקוי
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading image:', error);
+    }
   };
 
   return (
