@@ -355,14 +355,14 @@ export default function Home() {
               <ul className="text-lg text-purple-600 space-y-2 text-right">
                 <li>📸 התמונה צריכה להיות ברורה ולהראות את הפנים</li>
                 <li>👀 רצוי תמונה חזיתית (פרונטלית)</li>
-                <li>�� הפנים צריכות להיות מוארות היטב</li>
+                <li>הפנים צריכות להיות מוארות היטב</li>
                 <li>📦 גודל מקסימלי: 5MB</li>
               </ul>
             </motion.div>
             
             <label className="w-full max-w-md flex flex-col items-center px-6 py-8 bg-gradient-to-br from-purple-50 to-pink-50 text-purple rounded-[1.5rem] shadow-xl tracking-wide border-2 border-purple-200 cursor-pointer hover:border-purple-400 hover:shadow-2xl transition-all duration-300">
               <div className="text-5xl mb-4 text-purple-500">
-                <FaCamera className="w-16 h-16" />
+                📸
               </div>
               <span className="text-xl font-medium text-purple-700">העלו תמונה!</span>
               <span className="text-sm text-purple-500 mt-2">לחצו כאן או גררו תמונה</span>

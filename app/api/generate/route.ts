@@ -24,29 +24,50 @@ export async function POST(request: Request) {
     const imageUrl = await fal.storage.upload(imageBlob);
     console.log('Upload successful, URL:', imageUrl);
 
-    const result = await fal.subscribe("fal-ai/photomaker", {
-      input: {
-        image_archive_url: imageUrl,
-        prompt,
-        style: "Disney Character",
-        base_pipeline: "photomaker-style",
-        num_images: 1,
-        guidance_scale: 5,
-        style_strength: 20,
-        negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-        num_inference_steps: 50
-      },
-      logs: true,
-      onQueueUpdate: (update) => {
-        if (update.status === "IN_PROGRESS") {
-          update.logs.map((log) => log.message).forEach(console.log);
-        }
-      },
-    });
+    try {
+      const result = await fal.subscribe("fal-ai/photomaker", {
+        input: {
+          image_archive_url: imageUrl,
+          prompt,
+          style: "Disney Character",
+          base_pipeline: "photomaker-style",
+          num_images: 1,
+          guidance_scale: 5,
+          style_strength: 20,
+          negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+          num_inference_steps: 50
+        },
+        logs: true,
+        onQueueUpdate: (update) => {
+          if (update.status === "IN_PROGRESS") {
+            update.logs.map((log) => log.message).forEach(console.log);
+          }
+        },
+      });
 
-    console.log('Result data:', result.data);
-    console.log('Request ID:', result.requestId);
-    return NextResponse.json(result.data);
+      console.log('Result data:', result.data);
+      console.log('Request ID:', result.requestId);
+      return NextResponse.json(result.data);
+      
+    } catch (error) {
+      // טיפול בשגיאות ספציפיות של API
+      if (error instanceof Error) {
+        if (error.message.includes('rate limit')) {
+          return NextResponse.json({ 
+            error: 'rate_limit',
+            details: 'Server is busy, please try again in a minute'
+          }, { status: 429 });
+        }
+        if (error.message.includes('timeout')) {
+          return NextResponse.json({ 
+            error: 'timeout',
+            details: 'Request timed out, please try again'
+          }, { status: 408 });
+        }
+      }
+      throw error; // העבר שגיאות אחרות הלאה
+    }
+
   } catch (error) {
     console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
     
