@@ -17,20 +17,55 @@ export const COSTUMES: Costume[] = [
     prompt: 'A boy img as a wise prophet wearing flowing white and gold robes, holding a wooden staff, standing dignified on mountain top, dramatic desert sunrise background, modest traditional clothing, majestic atmosphere, high quality portrait'
   },
   {
-    id: 'doctor-boy',
-    name: 'רופא',
-    description: 'תחפושת רופא עם חלוק לבן וסטטוסקופ',
+    id: 'soldier',
+    name: 'חייל צה"ל',
+    description: 'תחפושת חייל צה"ל אמיץ',
     gender: 'boy',
-    prompt: 'A boy img as a kind doctor wearing a pristine white coat and stethoscope, in modern medical office with advanced equipment, caring expression, modest professional attire, soft professional lighting, high quality portrait'
+    prompt: 'A boy img as an IDF soldier wearing a neat military uniform, standing proud with Israeli flag background, modest and respectful pose, professional military bearing, natural outdoor lighting, high quality portrait'
   },
   {
-    id: 'king-solomon',
-    name: 'המלך שלמה',
-    description: 'תחפושת המלך שלמה החכם',
+    id: 'astronaut',
+    name: 'אסטרונאוט',
+    description: 'תחפושת אסטרונאוט בחלל',
     gender: 'boy',
-    prompt: 'A boy img as wise king Solomon wearing majestic deep blue and gold robes with intricate patterns, golden crown, sitting on ornate throne in grand palace hall, dignified pose, traditional biblical clothing, dramatic royal lighting'
+    prompt: 'A boy img as an astronaut wearing a pristine white spacesuit with Israeli flag patch, standing in space station, Earth visible through window, professional and dignified pose, dramatic space lighting, high quality portrait'
   },
-  
+  {
+    id: 'police',
+    name: 'שוטר',
+    description: 'תחפושת שוטר אחראי',
+    gender: 'boy',
+    prompt: 'A boy img as a police officer wearing a neat blue uniform, badge and cap, standing by police car, professional and responsible pose, natural daylight, high quality portrait'
+  },
+  {
+    id: 'scientist',
+    name: 'מדען',
+    description: 'תחפושת מדען בכיר',
+    gender: 'boy',
+    prompt: 'A boy img as a scientist wearing a white lab coat and safety goggles, standing in advanced laboratory with scientific equipment, professional and focused expression, clean laboratory lighting, high quality portrait'
+  },
+  {
+    id: 'chef',
+    name: 'שף',
+    description: 'תחפושת שף מקצועי',
+    gender: 'boy',
+    prompt: 'A boy img as a professional chef wearing white chef uniform and traditional toque, standing in modern kitchen with cooking equipment, professional culinary pose, warm kitchen lighting, high quality portrait'
+  },
+  {
+    id: 'paramedic',
+    name: 'חובש',
+    description: 'תחפושת חובש מציל חיים',
+    gender: 'boy',
+    prompt: 'A boy img as a paramedic wearing white and orange uniform with medical equipment, standing by ambulance, professional and caring expression, natural emergency service lighting, high quality portrait'
+  },
+  {
+    id: 'pilot',
+    name: 'טייס',
+    description: 'תחפושת טייס מקצועי',
+    gender: 'boy',
+    prompt: 'A boy img as a pilot wearing professional flight suit and aviator sunglasses, standing in front of aircraft, dignified military pose, outdoor airport lighting, high quality portrait'
+  },
+
   // בנות
   {
     id: 'esther',
@@ -40,25 +75,39 @@ export const COSTUMES: Costume[] = [
     prompt: 'A girl img as modest queen Esther wearing an elegant long royal dress in deep purple with gold embroidery, delicate crown, dignified pose in Persian palace garden, traditional modest Jewish clothing covering shoulders and knees, soft regal lighting'
   },
   {
-    id: 'miriam',
-    name: 'מרים הנביאה',
-    description: 'תחפושת מרים הנביאה עם תוף מרים',
+    id: 'scientist-girl',
+    name: 'מדענית',
+    description: 'תחפושת מדענית מבריקה',
     gender: 'girl',
-    prompt: 'A girl img as a noble prophetess wearing flowing blue and white robes, holding decorative tambourine, standing by oasis in desert, traditional biblical clothing modestly covering shoulders and knees, warm desert sunset lighting'
+    prompt: 'A girl img as a brilliant scientist wearing a modest white lab coat and safety goggles, standing in high-tech laboratory, professional attire covering shoulders and knees, focused expression, clean laboratory lighting, high quality portrait'
   },
   {
     id: 'doctor-girl',
     name: 'רופאה',
-    description: 'תחפושת רופאה עם חלוק לבן וסטטוסקופ',
+    description: 'תחפושת רופאה מסורה',
     gender: 'girl',
     prompt: 'A girl img as a compassionate doctor wearing professional white coat and stethoscope, in modern hospital setting with medical charts, modest professional attire covering shoulders and knees, natural medical office lighting'
   },
   {
-    id: 'sarah',
-    name: 'שרה אמנו',
-    description: 'תחפושת שרה אמנו האצילה',
+    id: 'astronaut-girl',
+    name: 'אסטרונאוטית',
+    description: 'תחפושת אסטרונאוטית בחלל',
     gender: 'girl',
-    prompt: 'A girl img as matriarch Sarah wearing long modest earth-toned robes with elegant embroidery, traditional head covering, dignified pose by desert tent, biblical clothing covering shoulders and knees, warm evening lighting with tent backdrop'
+    prompt: 'A girl img as an astronaut wearing a modest spacesuit with Israeli flag patch, floating in space station, Earth in background, professional pose, dramatic space lighting, high quality portrait'
+  },
+  {
+    id: 'chef-girl',
+    name: 'שפית',
+    description: 'תחפושת שפית מקצועית',
+    gender: 'girl',
+    prompt: 'A girl img as a professional chef wearing modest white chef uniform and traditional toque, in professional kitchen with cooking utensils, dignified culinary pose, warm kitchen lighting, high quality portrait'
+  },
+  {
+    id: 'police-girl',
+    name: 'שוטרת',
+    description: 'תחפושת שוטרת אחראית',
+    gender: 'girl',
+    prompt: 'A girl img as a police officer wearing a modest blue uniform, badge and cap, professional stance by police car, modest attire, natural daylight, high quality portrait'
   },
   {
     id: 'teacher',
@@ -66,5 +115,19 @@ export const COSTUMES: Costume[] = [
     description: 'תחפושת מורה בכיתה',
     gender: 'girl',
     prompt: 'A girl img as an inspiring teacher wearing elegant modest outfit in warm neutral colors, standing by classroom blackboard with books and globe, professional attire covering shoulders and knees, cheerful classroom lighting'
+  },
+  {
+    id: 'judge',
+    name: 'שופטת',
+    description: 'תחפושת שופטת מכובדת',
+    gender: 'girl',
+    prompt: 'A girl img as a distinguished judge wearing traditional black robes, holding gavel, in dignified courtroom setting, modest professional attire, formal judicial lighting, high quality portrait'
+  },
+  {
+    id: 'veterinarian',
+    name: 'וטרינרית',
+    description: 'תחפושת וטרינרית אוהבת חיות',
+    gender: 'girl',
+    prompt: 'A girl img as a caring veterinarian wearing modest white medical coat, with stethoscope, in modern veterinary clinic with friendly pet, professional medical attire covering shoulders and knees, warm clinic lighting'
   }
 ]; 
