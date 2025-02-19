@@ -278,7 +278,7 @@ export default function Home() {
       await new Promise<void>((resolve, reject) => {
         logo.onload = () => resolve();
         logo.onerror = () => reject(new Error('Failed to load logo'));
-        logo.src = "https://otiyotveyeladim.co.il/wp-content/uploads/2022/12/otiotLogo.svg";
+        logo.src = "/images/logo.png";
       });
 
       // חישוב גודל הלוגו (10% מרוחב התמונה)
@@ -527,7 +527,7 @@ export default function Home() {
                 />
                 <div className="absolute left-4 bottom-4 w-24 h-auto z-10">
                   <Image
-                    src="https://otiyotveyeladim.co.il/wp-content/uploads/2022/12/otiotLogo.svg"
+                    src="/images/logo.png"
                     alt="אותיות וילדים"
                     width={96}
                     height={40}
