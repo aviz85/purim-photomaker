@@ -7,6 +7,7 @@ import { COSTUMES } from '../lib/constants';
 import { Costume, GeneratedImage } from '../lib/types';
 import Image from 'next/image';
 import confetti from 'canvas-confetti';
+import { FaCamera } from 'react-icons/fa';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -85,10 +86,11 @@ function RandomMessage({ messages, interval }: { messages: string[][], interval:
   return (
     <motion.p
       key={`${phase}-${messageIndex}`}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="text-lg text-purple-800"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.8 }}
+      className="text-lg text-purple-800 min-h-[2em]"
     >
       {messages[phase][messageIndex]}
     </motion.p>
@@ -264,6 +266,29 @@ export default function Home() {
           </p>
         </div>
 
+        <div className="space-y-12">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-purple-800 mb-4">איך זה עובד?</h2>
+            <div className="flex flex-col md:flex-row justify-center gap-6 text-lg">
+              <div className="bg-white p-6 rounded-2xl shadow-lg flex-1 max-w-sm">
+                <div className="text-3xl mb-2">1️⃣</div>
+                <h3 className="font-bold text-purple-700 mb-2">בחרו תחפושת</h3>
+                <p className="text-purple-600">בחרו את התחפושת המושלמת מהאפשרויות שלנו</p>
+              </div>
+              <div className="bg-white p-6 rounded-2xl shadow-lg flex-1 max-w-sm">
+                <div className="text-3xl mb-2">2️⃣</div>
+                <h3 className="font-bold text-purple-700 mb-2">העלו תמונה</h3>
+                <p className="text-purple-600">העלו תמונה ברורה של הפנים מהמחשב או הטלפון</p>
+              </div>
+              <div className="bg-white p-6 rounded-2xl shadow-lg flex-1 max-w-sm">
+                <div className="text-3xl mb-2">3️⃣</div>
+                <h3 className="font-bold text-purple-700 mb-2">צרו קסם</h3>
+                <p className="text-purple-600">לחצו על הכפתור וחכו לקסם לקרות!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white rounded-[2rem] shadow-2xl p-8 mb-8 transform hover:scale-[1.02] transition-all duration-300">
           <Tab.Group selectedIndex={selectedGender === 'boy' ? 0 : 1} onChange={handleTabChange}>
             <Tab.List className="flex space-x-4 rtl:space-x-reverse mb-8">
@@ -330,20 +355,17 @@ export default function Home() {
               <ul className="text-lg text-purple-600 space-y-2 text-right">
                 <li>📸 התמונה צריכה להיות ברורה ולהראות את הפנים</li>
                 <li>👀 רצוי תמונה חזיתית (פרונטלית)</li>
-                <li>💡 הפנים צריכות להיות מוארות היטב</li>
+                <li>�� הפנים צריכות להיות מוארות היטב</li>
                 <li>📦 גודל מקסימלי: 5MB</li>
               </ul>
             </motion.div>
             
             <label className="w-full max-w-md flex flex-col items-center px-6 py-8 bg-gradient-to-br from-purple-50 to-pink-50 text-purple rounded-[1.5rem] shadow-xl tracking-wide border-2 border-purple-200 cursor-pointer hover:border-purple-400 hover:shadow-2xl transition-all duration-300">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="text-5xl mb-4"
-              >
-                ✨
-              </motion.div>
-              <span className="text-xl font-medium text-purple-700">העלו תמונה קסומה!</span>
+              <div className="text-5xl mb-4 text-purple-500">
+                <FaCamera className="w-16 h-16" />
+              </div>
+              <span className="text-xl font-medium text-purple-700">העלו תמונה!</span>
+              <span className="text-sm text-purple-500 mt-2">לחצו כאן או גררו תמונה</span>
               <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
             </label>
           </div>
@@ -385,7 +407,7 @@ export default function Home() {
               >
                 🎭
               </motion.div>
-              <RandomMessage messages={loadingMessages} interval={2000} />
+              <RandomMessage messages={loadingMessages} interval={4000} />
               <p className="text-sm text-purple-600 mt-2">
                 (זה יכול לקחת כדקה, בדיוק כמו שמרדכי חיכה בשער המלך...)
               </p>
