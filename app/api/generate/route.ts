@@ -14,7 +14,7 @@ fal.config({
 
 export async function POST(request: Request) {
   try {
-    const { images, prompt, style } = await request.json();
+    const { images, prompt } = await request.json();
     
     // Upload the image directly
     const base64Data = images[0].split(',')[1];
