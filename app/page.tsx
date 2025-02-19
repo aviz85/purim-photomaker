@@ -190,6 +190,11 @@ export default function Home() {
 
       if (data.images?.[0]?.url) {
         setGeneratedImage(data.images[0]);
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
       } else {
         console.error('Unexpected response format:', data);
         throw new Error('No image was generated');
