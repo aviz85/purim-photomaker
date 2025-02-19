@@ -7,7 +7,6 @@ import { COSTUMES } from '../lib/constants';
 import { Costume, GeneratedImage } from '../lib/types';
 import Image from 'next/image';
 import confetti from 'canvas-confetti';
-import { FaCamera } from 'react-icons/fa';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
