@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { fal } from "@fal-ai/client";  // Use client instead of serverless-client
+import sharp from 'sharp';
 
 export const runtime = 'edge';
 export const maxDuration = 300; // timeout של 5 דקות בשניות
 
 const FAL_KEY = process.env.FAL_KEY;
+const LOGO_BASE64 = "data:image/png;base64,..."; // הלוגו שלך כ-base64
+
 if (!FAL_KEY) {
   throw new Error('FAL_KEY environment variable is not set');
 }
@@ -12,6 +15,39 @@ if (!FAL_KEY) {
 fal.config({
   credentials: process.env.FAL_KEY
 });
+
+async function addLogoToImage(imageUrl: string) {
+  // הורדת התמונה המקורית
+  const imageResponse = await fetch(imageUrl);
+  const imageBuffer = await imageResponse.arrayBuffer();
+
+  // המרת הלוגו מ-base64 לבאפר
+  const logoData = LOGO_BASE64.split(',')[1];
+  const logoBuffer = Buffer.from(logoData, 'base64');
+
+  // עיבוד התמונה עם sharp
+  const image = sharp(Buffer.from(imageBuffer));
+  const metadata = await image.metadata();
+  
+  // חישוב גודל הלוגו (10% מרוחב התמונה)
+  const logoWidth = Math.round(metadata.width! * 0.1);
+  const margin = Math.round(metadata.width! * 0.02);
+
+  // הוספת הלוגו
+  const finalImage = await image
+    .composite([
+      {
+        input: logoBuffer,
+        left: margin,
+        top: metadata.height! - (logoWidth * 0.4) - margin, // שומר על יחס גובה-רוחב של הלוגו
+        width: logoWidth
+      }
+    ])
+    .toBuffer();
+
+  // המרה ל-base64 להחזרה
+  return `data:image/png;base64,${finalImage.toString('base64')}`;
+}
 
 export async function POST(request: Request) {
   try {
@@ -49,7 +85,16 @@ export async function POST(request: Request) {
 
       console.log('Result data:', result.data);
       console.log('Request ID:', result.requestId);
-      return NextResponse.json(result.data);
+
+      // הוספת הלוגו לתמונה
+      const imageWithLogo = await addLogoToImage(result.data.images[0].url);
+
+      // החזרת התמונה המעודכנת
+      return NextResponse.json({
+        images: [{
+          url: imageWithLogo
+        }]
+      });
       
     } catch (error) {
       // טיפול בשגיאות ספציפיות של API

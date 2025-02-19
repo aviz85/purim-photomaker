@@ -246,64 +246,14 @@ export default function Home() {
     return messages[Math.floor(Math.random() * messages.length)];
   };
 
-  // נוסיף פונקציה להורדת התמונה עם הלוגו
-  const handleDownload = async () => {
+  // החלפת פונקציית ההורדה לפשוטה יותר
+  const handleDownload = () => {
     if (!generatedImage?.url) return;
-
-    try {
-      // יצירת קנבס
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      // טעינת התמונה המקורית
-      const img = new window.Image();
-      img.crossOrigin = "anonymous";
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('Failed to load image'));
-        img.src = generatedImage.url;
-      });
-
-      // הגדרת גודל הקנבס
-      canvas.width = img.width;
-      canvas.height = img.height;
-
-      // ציור התמונה המקורית
-      ctx.drawImage(img, 0, 0);
-
-      // טעינת הלוגו
-      const logo = new window.Image();
-      logo.crossOrigin = "anonymous";
-      await new Promise<void>((resolve, reject) => {
-        logo.onload = () => resolve();
-        logo.onerror = () => reject(new Error('Failed to load logo'));
-        logo.src = "/images/logo.png";
-      });
-
-      // חישוב גודל הלוגו (10% מרוחב התמונה)
-      const logoWidth = img.width * 0.1;
-      const logoHeight = (logo.height / logo.width) * logoWidth;
-      
-      // ציור הלוגו בפינה השמאלית התחתונה עם מרווח
-      const margin = img.width * 0.02; // 2% מרווח
-      ctx.drawImage(
-        logo,
-        margin,
-        img.height - logoHeight - margin,
-        logoWidth,
-        logoHeight
-      );
-
-      // המרה ל-URL והורדה
-      const dataUrl = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = 'purim-costume.png';
-      link.click();
-    } catch (error) {
-      console.error('Error downloading image:', error);
-    }
+    
+    const link = document.createElement('a');
+    link.href = generatedImage.url;
+    link.download = 'purim-costume.png';
+    link.click();
   };
 
   return (
@@ -525,15 +475,6 @@ export default function Home() {
                   fill
                   className="object-contain rounded-lg"
                 />
-                <div className="absolute left-4 bottom-4 w-24 h-auto z-10">
-                  <Image
-                    src="/images/logo.png"
-                    alt="אותיות וילדים"
-                    width={96}
-                    height={40}
-                    className="w-full h-auto"
-                  />
-                </div>
               </div>
               <div className="mt-4 text-center">
                 <button
