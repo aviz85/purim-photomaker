@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fal } from "@fal-ai/client";
 import sharp from 'sharp';
+import { IS_GENERATOR_ENABLED } from '../../../lib/constants';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -50,6 +51,13 @@ async function addLogoToImage(imageUrl: string) {
 }
 
 export async function POST(request: Request) {
+  if (!IS_GENERATOR_ENABLED) {
+    return NextResponse.json({ 
+      error: 'service_disabled',
+      details: 'משנכנס אדר מרבים בשמחה - הכלי יפתח לשימוש בקרוב...'
+    }, { status: 503 });
+  }
+
   try {
     const { images, prompt } = await request.json();
     

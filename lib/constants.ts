@@ -1,5 +1,7 @@
 import { Costume } from './types';
 
+export const IS_GENERATOR_ENABLED = false;
+
 export const COSTUMES: Costume[] = [
   // בנים
   {

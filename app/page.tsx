@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tab } from '@headlessui/react';
-import { COSTUMES } from '../lib/constants';
+import { COSTUMES, IS_GENERATOR_ENABLED } from '../lib/constants';
 import { Costume, GeneratedImage } from '../lib/types';
 import Image from 'next/image';
 import confetti from 'canvas-confetti';
@@ -159,6 +159,11 @@ export default function Home() {
   }, []);
 
   const handleGenerate = async () => {
+    if (!IS_GENERATOR_ENABLED) {
+      setError('משנכנס אדר מרבים בשמחה - הכלי יפתח לשימוש בקרוב...');
+      return;
+    }
+
     if (!selectedCostume || !uploadedImage) return;
 
     setIsLoading(true);
@@ -460,14 +465,14 @@ export default function Home() {
                 className={classNames(
                   'px-8 py-3 rounded-lg text-lg font-medium',
                   'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-purple-400',
-                  isLoading || !selectedCostume || !uploadedImage
+                  !IS_GENERATOR_ENABLED || isLoading || !selectedCostume || !uploadedImage
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-purple-600 text-white hover:bg-purple-700'
                 )}
                 onClick={handleGenerate}
-                disabled={isLoading || !selectedCostume || !uploadedImage}
+                disabled={!IS_GENERATOR_ENABLED || isLoading || !selectedCostume || !uploadedImage}
               >
-                {isLoading ? 'יוצר תמונה...' : 'צור תמונה קסומה!'}
+                {!IS_GENERATOR_ENABLED ? 'הכלי יפתח בקרוב...' : isLoading ? 'יוצר תמונה...' : 'צור תמונה קסומה!'}
               </button>
             </div>
           </div>
