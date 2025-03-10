@@ -1,6 +1,6 @@
 import { Costume } from './types';
 
-export const IS_GENERATOR_ENABLED = false;
+export const IS_GENERATOR_ENABLED = true;
 
 export const COSTUMES: Costume[] = [
   // בנים
