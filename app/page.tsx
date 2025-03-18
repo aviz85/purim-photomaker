@@ -119,7 +119,67 @@ const spinningEmoji = {
   }
 };
 
+const ServiceDisabledMessage = () => {
+  const emojis = ['🎭', '🎪', '👑', '🎨', '✨', '🎉'];
+  
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-100 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+      <div className="max-w-2xl mx-auto text-center">
+        <div className="relative mb-8">
+          {emojis.map((emoji, index) => (
+            <motion.span
+              key={index}
+              className="text-4xl inline-block mx-2"
+              animate={{
+                y: [0, -20, 0],
+                rotate: [0, 360, 0],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                delay: index * 0.2,
+                ease: "easeInOut"
+              }}
+            >
+              {emoji}
+            </motion.span>
+          ))}
+        </div>
+        
+        <motion.h1
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="text-5xl font-bold text-purple-800 mb-6 tracking-wide"
+        >
+          תודה שחגגתם איתנו! 🎉
+        </motion.h1>
+        
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="space-y-4"
+        >
+          <p className="text-2xl text-purple-600 font-medium">
+            שמחנו לראות את כל התחפושות המדהימות שיצרתם!
+          </p>
+          <p className="text-xl text-purple-500">
+            תודה שהייתם חלק מחגיגת פורים המיוחדת שלנו
+          </p>
+          <p className="text-lg text-purple-400 mt-4">
+            חג שמח! 🎭
+          </p>
+        </motion.div>
+      </div>
+    </main>
+  );
+};
+
 export default function Home() {
+  if (!IS_GENERATOR_ENABLED) {
+    return <ServiceDisabledMessage />;
+  }
+  
   const [selectedGender, setSelectedGender] = useState<'boy' | 'girl'>('boy');
   const [selectedCostume, setSelectedCostume] = useState<Costume | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);

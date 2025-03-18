@@ -54,7 +54,7 @@ export async function POST(request: Request) {
   if (!IS_GENERATOR_ENABLED) {
     return NextResponse.json({ 
       error: 'service_disabled',
-      details: 'משנכנס אדר מרבים בשמחה - הכלי יפתח לשימוש בקרוב...'
+      details: 'תודה שחגגתם איתנו! שמחנו לראות את כל התחפושות המדהימות שיצרתם. חג שמח! 🎭'
     }, { status: 503 });
   }
 
