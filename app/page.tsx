@@ -176,10 +176,6 @@ const ServiceDisabledMessage = () => {
 };
 
 export default function Home() {
-  if (!IS_GENERATOR_ENABLED) {
-    return <ServiceDisabledMessage />;
-  }
-  
   const [selectedGender, setSelectedGender] = useState<'boy' | 'girl'>('boy');
   const [selectedCostume, setSelectedCostume] = useState<Costume | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -217,6 +213,10 @@ export default function Home() {
     };
     reader.readAsDataURL(file);
   }, []);
+
+  if (!IS_GENERATOR_ENABLED) {
+    return <ServiceDisabledMessage />;
+  }
 
   const handleGenerate = async () => {
     if (!IS_GENERATOR_ENABLED) {
