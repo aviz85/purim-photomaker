@@ -151,7 +151,7 @@ const ServiceDisabledMessage = () => {
           animate={{ scale: 1, opacity: 1 }}
           className="text-5xl font-bold text-purple-800 mb-6 tracking-wide"
         >
-          תודה שחגגתם איתנו! 🎉
+          לא כל יום פורים... 😉
         </motion.h1>
         
         <motion.div
@@ -161,10 +161,10 @@ const ServiceDisabledMessage = () => {
           className="space-y-4"
         >
           <p className="text-2xl text-purple-600 font-medium">
-            שמחנו לראות את כל התחפושות המדהימות שיצרתם!
+            תודה רבה - השירות הסתיים להפעם
           </p>
           <p className="text-xl text-purple-500">
-            תודה שהייתם חלק מחגיגת פורים המיוחדת שלנו
+            מקווים שנהניתם מחגיגת פורים המיוחדת!
           </p>
           <p className="text-lg text-purple-400 mt-4">
             חג שמח! 🎭

@@ -54,7 +54,7 @@ export async function POST(request: Request) {
   if (!IS_GENERATOR_ENABLED) {
     return NextResponse.json({ 
       error: 'service_disabled',
-      details: 'תודה שחגגתם איתנו! שמחנו לראות את כל התחפושות המדהימות שיצרתם. חג שמח! 🎭'
+      details: 'לא כל יום פורים... 😉 תודה רבה - השירות הסתיים להפעם. חג שמח! 🎭'
     }, { status: 503 });
   }
 
