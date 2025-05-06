@@ -17,37 +17,49 @@ fal.config({
 });
 
 async function addLogoToImage(imageUrl: string) {
-  // הורדת התמונה המקורית
-  const imageResponse = await fetch(imageUrl);
-  const imageBuffer = await imageResponse.arrayBuffer();
+  try {
+    // הורדת התמונה המקורית
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to fetch image: ${imageResponse.statusText}`);
+    }
+    const imageBuffer = await imageResponse.arrayBuffer();
 
-  // טעינת הלוגו מהפרויקט
-  const logoPath = process.cwd() + '/public/images/logo.png';
-  
-  // עיבוד התמונה עם sharp
-  const image = sharp(Buffer.from(imageBuffer));
-  const metadata = await image.metadata();
-  
-  // חישוב גודל הלוגו (30% מרוחב התמונה במקום 10%)
-  const logoWidth = Math.round(metadata.width! * 0.3);
-  const margin = Math.round(metadata.width! * 0.02);
+    // טעינת הלוגו מהפרויקט
+    const logoPath = process.cwd() + '/public/images/logo.png';
+    
+    // עיבוד התמונה עם sharp
+    const image = sharp(Buffer.from(imageBuffer));
+    const metadata = await image.metadata();
+    
+    if (!metadata.width) {
+      throw new Error('Failed to get image metadata');
+    }
+    
+    // חישוב גודל הלוגו (30% מרוחב התמונה)
+    const logoWidth = Math.round(metadata.width * 0.3);
+    const margin = Math.round(metadata.width * 0.02);
 
-  // הוספת הלוגו
-  const finalImage = await image
-    .composite([
-      {
-        input: await sharp(logoPath)
-          .resize(logoWidth)
-          .toBuffer(),
-        gravity: 'southeast',
-        left: margin,
-        top: margin
-      }
-    ])
-    .toBuffer();
+    // הוספת הלוגו
+    const finalImage = await image
+      .composite([
+        {
+          input: await sharp(logoPath)
+            .resize(logoWidth)
+            .toBuffer(),
+          gravity: 'southeast',
+          left: margin,
+          top: margin
+        }
+      ])
+      .toBuffer();
 
-  // המרה ל-base64
-  return `data:image/png;base64,${finalImage.toString('base64')}`;
+    // המרה ל-base64
+    return `data:image/png;base64,${finalImage.toString('base64')}`;
+  } catch (error) {
+    console.error('Error in addLogoToImage:', error);
+    throw error;
+  }
 }
 
 export async function POST(request: Request) {
@@ -61,6 +73,10 @@ export async function POST(request: Request) {
   try {
     const { images, prompt } = await request.json();
     
+    if (!images?.[0]) {
+      throw new Error('No image provided');
+    }
+    
     // Upload the image directly
     const base64Data = images[0].split(',')[1];
     const imageBlob = new Blob([Buffer.from(base64Data, 'base64')], { type: 'image/jpeg' });
@@ -69,65 +85,61 @@ export async function POST(request: Request) {
     const imageUrl = await fal.storage.upload(imageBlob);
     console.log('Upload successful, URL:', imageUrl);
 
-    try {
-      const result = await fal.subscribe("fal-ai/photomaker", {
-        input: {
-          image_archive_url: imageUrl,
-          prompt,
-          style: "Disney Character",
-          base_pipeline: "photomaker-style",
-          num_images: 1,
-          guidance_scale: 5,
-          style_strength: 20,
-          negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-          num_inference_steps: 20
-        },
-        logs: true,
-        onQueueUpdate: (update) => {
-          if (update.status === "IN_PROGRESS") {
-            update.logs.map((log) => log.message).forEach(console.log);
-          }
-        },
-        timeout: 300000 // 5 דקות
-      });
-
-      console.log('Result data:', result.data);
-      console.log('Request ID:', result.requestId);
-
-      // הוספת הלוגו לתמונה
-      const imageWithLogo = await addLogoToImage(result.data.images[0].url);
-
-      // החזרת התמונה המעודכנת
-      return NextResponse.json({
-        images: [{
-          url: imageWithLogo
-        }]
-      });
-      
-    } catch (error) {
-      // טיפול בשגיאות ספציפיות של API
-      if (error instanceof Error) {
-        if (error.message.includes('rate limit')) {
-          return NextResponse.json({ 
-            error: 'rate_limit',
-            details: 'Server is busy, please try again in a minute'
-          }, { status: 429 });
+    const result = await fal.subscribe("fal-ai/photomaker", {
+      input: {
+        image_archive_url: imageUrl,
+        prompt,
+        style: "Disney Character",
+        base_pipeline: "photomaker-style",
+        num_images: 1,
+        guidance_scale: 5,
+        style_strength: 20,
+        negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+        num_inference_steps: 20
+      },
+      logs: true,
+      onQueueUpdate: (update) => {
+        if (update.status === "IN_PROGRESS") {
+          update.logs.map((log) => log.message).forEach(console.log);
         }
-        if (error.message.includes('timeout')) {
-          return NextResponse.json({ 
-            error: 'timeout',
-            details: 'Request timed out, please try again'
-          }, { status: 408 });
-        }
-      }
-      throw error; // העבר שגיאות אחרות הלאה
+      },
+      timeout: 300000 // 5 דקות
+    });
+
+    if (!result?.data?.images?.[0]?.url) {
+      throw new Error('No image generated from fal.ai');
     }
+
+    console.log('Result data:', result.data);
+    console.log('Request ID:', result.requestId);
+
+    // הוספת הלוגו לתמונה
+    const imageWithLogo = await addLogoToImage(result.data.images[0].url);
+
+    // החזרת התמונה המעודכנת
+    return NextResponse.json({
+      images: [{
+        url: imageWithLogo
+      }]
+    });
 
   } catch (error) {
     console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
     
     if (error instanceof Error) {
       // Handle specific error types
+      if (error.message.includes('rate limit')) {
+        return NextResponse.json({ 
+          error: 'rate_limit',
+          details: 'Server is busy, please try again in a minute'
+        }, { status: 429 });
+      }
+      if (error.message.includes('timeout')) {
+        return NextResponse.json({ 
+          error: 'timeout',
+          details: 'Request timed out, please try again'
+        }, { status: 408 });
+      }
       if (error.message.includes('Unauthorized')) {
         return NextResponse.json({ 
           error: 'Authentication failed',
